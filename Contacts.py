@@ -1,4 +1,4 @@
-from BaseClasses import Field, ErrorWithMsg
+from BaseClasses import *
 from datetime import datetime
 
 
@@ -35,27 +35,30 @@ class Birthday(Field):
         return birthday
 
 
-class Contacts:
-    cmds = [
-        ["add-contact", "add-contact <Name>", "Add contact to address book"],
-        [
+class Contacts(CmdProvider):
+    cmds_help = (
+        ("add-contact", "add-contact <Name>", "Add contact to address book"),
+        (
             "add-phone",
             "add-phone <Name> <phone_number>",
             "Add phone number to the contact",
-        ],
-        [
+        ),
+        (
             "edit-contact",
             "edit-contact <old_name> <new_ame>",
             "Rename existing contact",
-        ],
-        ["contact-hello", "contact-hello", "contact-hello"],
-    ]
+        ),
+    )
 
     def __init__(self) -> None:
-        pass
+        self.cmds = {}
+        self.cmds["add-contact"] = self.add_contact
+        self.cmds["add-phone"] = self.add_phone
+        self.cmds["edit-contact"] = self.edit_contact
+        # ....
 
     def help(self):
-        return Contacts.cmds
+        return Contacts.cmds_help
 
     def exe(self, cmd, args):
         return self.cmds[cmd](args)
@@ -75,8 +78,3 @@ class Contacts:
         # TODO self.contacts[Name(name).value].phone = Phone(in_phone)
 
         return f"Contact '{name}' was added."
-
-    def print_hello(self, args):
-        if len(args) > 0:
-            raise ValueError
-        return "Hello!"
