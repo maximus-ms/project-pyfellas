@@ -1,14 +1,15 @@
 from BaseClasses import Field, ErrorWithMsg
 from datetime import datetime
-
+import re
 
 class Name(Field):
     """Class for storing a contact's name. Mandatory field."""
 
     def validate(self, name: str):
         name = name.strip()
-        # TODO len(name) > 0
-        if type(name) is str:
+        if len(name) > 0:
+            pass
+        elif type(name) is str:
             return name
         raise ErrorWithMsg("Name must be a string")
 
@@ -33,6 +34,24 @@ class Birthday(Field):
         except:
             raise ErrorWithMsg("Invalid birthday format (DD.MM.YYYY)")
         return birthday
+
+class Address(Field):
+    """Class for Contact`s Address validation and storing"""
+
+    def validate(self, address):
+        address = address.strip()
+        return address
+    
+class Email(Field):
+    """Class for validation emails. Validate the format (Exa.maple@exam.ple) """
+
+    def validate(self, email):
+        email = email.strip()
+        try:
+            result = re.match(r'\b[a-z]{1}[\w\.\-\_]+@[\w\.\-\_]+\.[a-z]{2,}', email.lower()).group()
+        except: 
+            raise ErrorWithMsg("Invalid email format")
+        return result 
 
 
 class Contacts:
