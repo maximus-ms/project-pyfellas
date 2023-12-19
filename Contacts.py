@@ -37,28 +37,22 @@ class Birthday(Field):
 
 class Contacts:
     cmds = [
-        ("add-contact", "add-contact <Name>", "Add contact to address book"),
-        (
+        ["add-contact", "add-contact <Name>", "Add contact to address book"],
+        [
             "add-phone",
             "add-phone <Name> <phone_number>",
             "Add phone number to the contact",
-        ),
-        (
+        ],
+        [
             "edit-contact",
             "edit-contact <old_name> <new_ame>",
             "Rename existing contact",
-        ),
-        ("contact-hello", "contact-hello", "contact-hello"),
+        ],
+        ["contact-hello", "contact-hello", "contact-hello"],
     ]
 
     def __init__(self) -> None:
-        self.cmds = {
-            "add-contact": self.add_contact,
-            "add-phone": self.add_phone,
-            "edit-contact": self.edit_contact,
-            "edit-phone": self.add_phone,
-            "contact-hello": self.print_hello,
-        }
+        pass
 
     def help(self):
         return Contacts.cmds
