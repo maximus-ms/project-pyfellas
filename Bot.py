@@ -4,6 +4,7 @@ from Book import Book
 
 from rich.console import Console, Text
 
+
 class Bot(CmdProvider):
     HELLO_MSG = "Hi, this is your assistant."
     PROMPT_MSG = ">>> "
@@ -71,7 +72,10 @@ class Bot(CmdProvider):
             except ErrorWithMsg as e:
                 return e
             except ValueError as e:
-                return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(Bot.INVALID_CMD_MSG, __self.exes[func.__name__.replace('_','-')][1])
+                return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
+                    Bot.INVALID_CMD_MSG,
+                    __self.exes[func.__name__.replace("_", "-")][1],
+                )
             except Exception as e:
                 return str(e)
 
@@ -97,7 +101,6 @@ class Bot(CmdProvider):
         txt_list.append("")
         return "\n".join(txt_list)
 
-
     def exe_cmd(self, cmd, args):
         try:
             self.__is_error = True
@@ -107,7 +110,9 @@ class Bot(CmdProvider):
         except ErrorWithMsg as e:
             return e
         except ValueError as e:
-            return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(Bot.INVALID_CMD_MSG, self.exes[cmd.replace('_','-')][1])
+            return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
+                Bot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
+            )
         except Exception as e:
             return str(e)
 
