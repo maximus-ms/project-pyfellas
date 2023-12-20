@@ -1,3 +1,4 @@
+import pickle
 from Contacts import Contacts
 from Notes import Notes
 
@@ -12,9 +13,15 @@ class Book:
         self.load_from_file()
 
     def load_from_file(self):
-        # TODO
-        pass
+        try:
+            with open(self.filename, "rb") as f:
+                data = pickle.load(f)
+                self.contact = data.get("contacts", Contacts())
+                self.notes = data.get("notes", Notes())
+        except:
+            pass
 
     def save_to_file(self):
-        # TODO
-        pass
+        data = {"contacts": self.contacts, "notes": self.notes}
+        with open(self.filename, "wb") as f:
+            pickle.dump(data, f)
