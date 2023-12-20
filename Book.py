@@ -1,6 +1,6 @@
 from BaseClasses import *
 from Contacts import Contacts
-
+import pickle
 
 # from Notes import Notes
 class Notes(CmdProvider):
@@ -21,9 +21,13 @@ class Book:
         self.load_from_file()
 
     def load_from_file(self):
-        # TODO
+        with open(self.filename, "rb") as f:
+            data = pickle.load(f)
+            self.contact = data.get("contacts", {})
+            self.notes = data.get("notes", {})
         pass
 
     def save_to_file(self):
-        # TODO
-        pass
+        data = {"contacts": self.contacts, "notes": self.notes}
+        with open(self.filename, "wb") as f:
+                pickle.dump(data, f)
