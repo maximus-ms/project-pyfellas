@@ -1,6 +1,4 @@
-from collections import UserDict
 from abc import ABC, abstractmethod
-from datetime import datetime
 
 
 class ErrorWithMsg(Exception):
@@ -37,3 +35,19 @@ class Field(ABC):
     def validate(self, value) -> None:
         """Must raise an exception if not valid or return a value"""
         raise ErrorWithMsg("Unknown value validator")
+
+
+class Topic(Field):
+    """Topic field of Notes"""
+
+    def validate(self, topic: str):
+        if not topic:
+            raise ErrorWithMsg("Topic cannot be empty.")
+        return topic
+
+
+class Text(Field):
+    """Text field of Notes"""
+
+    def validate(self, text: str):
+        pass
