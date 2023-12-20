@@ -50,7 +50,9 @@ class Text(Field):
     """Text field of Notes"""
 
     def validate(self, text: str):
-        pass
+        if not isinstance(text, str):
+            raise ErrorWithMsg("Text must be a string.")
+        return text
 
 
 class CmdProvider(ABC):

@@ -1,14 +1,5 @@
-from BaseClasses import *
 from Contacts import Contacts
-
-
-# from Notes import Notes
-class Notes(CmdProvider):
-    def help(self):
-        return []
-
-    def exe(self, args):
-        return ""
+from Notes import Notes
 
 
 class Book:
