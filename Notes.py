@@ -1,7 +1,25 @@
 import re
 from collections import UserDict
 
-from BaseClasses import Topic, Text, CmdProvider, ErrorWithMsg
+from BaseClasses import CmdProvider, ErrorWithMsg, Field
+
+
+class Topic(Field):
+    """Topic field of Notes"""
+
+    def validate(self, topic: str):
+        if not topic:
+            raise ErrorWithMsg("Topic cannot be empty.")
+        return topic
+
+
+class Text(Field):
+    """Text field of Notes"""
+
+    def validate(self, text: str):
+        if not isinstance(text, str):
+            raise ErrorWithMsg("Text must be a string.")
+        return text
 
 
 class Note:

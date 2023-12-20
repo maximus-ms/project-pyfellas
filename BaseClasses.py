@@ -37,24 +37,6 @@ class Field(ABC):
         raise ErrorWithMsg("Unknown value validator")
 
 
-class Topic(Field):
-    """Topic field of Notes"""
-
-    def validate(self, topic: str):
-        if not topic:
-            raise ErrorWithMsg("Topic cannot be empty.")
-        return topic
-
-
-class Text(Field):
-    """Text field of Notes"""
-
-    def validate(self, text: str):
-        if not isinstance(text, str):
-            raise ErrorWithMsg("Text must be a string.")
-        return text
-
-
 class CmdProvider(ABC):
     #   __cmds_help_example = (
     #        ("cmd1", "cmd1 <arg>",          "cmd1 is used to call cmd1"),
