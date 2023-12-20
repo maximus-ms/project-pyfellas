@@ -59,7 +59,7 @@ class Contacts(CmdProvider):
         ("add-contact", "add-contact <Name>", "Add contact to address book"),
         (
             "rename-contact",
-            "rename-contact <Old_name> <New_ame>",
+            "rename-contact <Old_name> <New_name>",
             "Rename existing contact",
         ),  
         (
