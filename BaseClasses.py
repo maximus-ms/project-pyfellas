@@ -51,3 +51,22 @@ class Text(Field):
 
     def validate(self, text: str):
         pass
+
+
+class CmdProvider(ABC):
+    #   __cmds_help_example = (
+    #        ("cmd1", "cmd1 <arg>",          "cmd1 is used to call cmd1"),
+    #        ("cmd2", "cmd1 <arg1>, <arg2>", "cmd2 is used to call cmd2"),
+    #   )
+
+    @abstractmethod
+    def exe(self, cmd, args):
+        raise ErrorWithMsg("Unknown exe()")
+        # if cmd == "cmd1":
+        # return self.cmd1(args)
+
+    @abstractmethod
+    def help(self):
+        raise ErrorWithMsg("Unknown help()")
+        return []
+        # return _Your_class_name_.__cmds_example
