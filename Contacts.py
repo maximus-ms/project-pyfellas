@@ -7,7 +7,7 @@ class Name(Field):
 
     def validate(self, name: str):
         name = name.strip()
-        if len(name) > 0:
+        if type(name) is str and len(name) > 0:
             pass
         elif type(name) is str:
             return name
