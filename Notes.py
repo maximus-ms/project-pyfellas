@@ -86,7 +86,8 @@ class Notes(UserDict, CmdProvider):
             raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
         note = self.data.get(topic)
         note.text.value = new_text
-        return f"Text of the note {topic} was changed"
+        note.text_tags = Note.extract_hashtags(new_text)
+        return f"Text of the note {topic} was changed, and text tags were updated."
 
     def delete_note(self, args):
         topic, = args
