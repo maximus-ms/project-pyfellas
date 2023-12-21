@@ -177,7 +177,7 @@ class Contacts(UserDict, CmdProvider):
     def __init__(self) -> None:
         super().__init__()
         self.cmds = {}
-        self.cmds["add-contact"] = self.add_contact
+        self.cmds["add_contact"] = self.add_contact
         self.cmds["rename-contact"] = self.rename_contact
         self.cmds["delete-contact"] = self.delete_contact
         self.cmds["add-phone"] = self.add_phone
@@ -270,8 +270,14 @@ class Contacts(UserDict, CmdProvider):
         return ""
 
     def add_birthday(self, args):
-        # TODO
-        return ""
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name, Birthday]
+        list_of_prompts = ["Name: ", "Birthday: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_is_free)
+        name = data[0].value
+        self.data[name] = Contact(data[0], data[1])
+        return f"{name}'s birthday was added"
 
     def edit_birthday(self, args):
         return self.add_birthday(args)
