@@ -216,7 +216,7 @@ class Contacts(UserDict, CmdProvider):
 
     def assert_name_exist(self, name):
         good_name = Name(name)
-        if name in self.data:
+        if not name in self.data:
             raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND.format(name))
         pass
 
@@ -283,7 +283,7 @@ class Contacts(UserDict, CmdProvider):
         data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data[name].birthday = data[1]
-        return f"{name}'s birthday was added"
+        return  f"Birthday for '{name}' was set"
 
     def edit_birthday(self, args):
         return self.add_birthday(args)
@@ -296,17 +296,17 @@ class Contacts(UserDict, CmdProvider):
         data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data[name].birthday = None
-        return f"{name}'s birthday was deleted"
+        return  f"Birthday for '{name}' was deleted"
 
     def add_address(self, args):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Name, Address]
-        list_of_prompts = ["Name: ", "Adddress: "]
+        list_of_prompts = ["Name: ", "Address: "]
         data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data[name].address = data[1]
-        return f"{name}'s birthday was deleted"
+        return  f"Address for '{name}' was set"
 
     def edit_address(self, args):
         return self.add_address(args)
@@ -319,7 +319,7 @@ class Contacts(UserDict, CmdProvider):
         data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data[name].address = None
-        return f"{name}'s birthday was deleted"
+        return  f"Address for '{name}' was deleted"
 
     def all_contacts(self, args):
         return self.get_str_list_of_contacts()
