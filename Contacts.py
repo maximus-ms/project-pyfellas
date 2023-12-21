@@ -235,8 +235,11 @@ class Contacts(UserDict, CmdProvider):
         return f"Contact {name} was renamed to {new_name}"
 
     def delete_contact(self, args):
-        # TODO
-        return ""
+        (name,) = args
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        self.data[name].contact = None
+        return "Contact {name} was deleted from to address book"
 
     def add_phone(self, args):
         (name, phone) = args
@@ -244,9 +247,19 @@ class Contacts(UserDict, CmdProvider):
             raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
         self.data[name].phone = Phone(phone)
         return "Phone {phone} was set for contact {name}"
-
+ 
     def edit_phone(self, args):
-        return self.add_phone(args)
+        (name, new_name) = args
+        good_name = Name(name)
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        good_new_name = Name(new_name)
+        if new_name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(new_name))
+        phone = self.data.pop(name)
+        phone.name = good_new_name
+        self.data[new_name] = phone
+        return f"Phone {name} was renamed to {new_name}"
 
     def delete_phone(self, args):
         (name,) = args
@@ -256,15 +269,31 @@ class Contacts(UserDict, CmdProvider):
         return "Phone was deleted from contact {name}"
 
     def add_email(self, args):
-        # TODO
-        return ""
+        (name, email) = args
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        self.data[name].email = Email(email)
+        return "Email {email} was set for contact {name}"  
 
     def edit_email(self, args):
-        return self.add_email(args)
+        (name, new_name) = args
+        good_name = Name(name)
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        good_new_name = Name(new_name)
+        if new_name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(new_name))
+        email = self.data.pop(name)
+        email.name = good_new_name
+        self.data[new_name] = email
+        return f"Email {name} was renamed to {new_name}"
 
     def delete_email(self, args):
-        # TODO
-        return ""
+        (name,) = args
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        self.data[name].email = None
+        return "Email was deleted from contact {name}"
 
     def add_birthday(self, args):
         # TODO
