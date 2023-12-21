@@ -105,7 +105,7 @@ class Contacts(UserDict, CmdProvider):
         ),
         (
             "delete-contact",
-            "delete-contact <Name>",
+            "delete-contact",
             "Delete existing contact",
         ),
         (
@@ -115,7 +115,7 @@ class Contacts(UserDict, CmdProvider):
         ),
         (
             "edit-phone",
-            "edit-phone <Name> <New_number>",
+            "edit-phone",
             "Edit phone number of the contact",
         ),
         (
@@ -125,17 +125,17 @@ class Contacts(UserDict, CmdProvider):
         ),
         (
             "add-email",
-            "add-email <Name> <Email>",
+            "add-email ",
             "Add email to the contact",
         ),
         (
             "edit-email",
-            "edit-email <Name> <New_email>",
+            "edit-email",
             "Edit email of the contact",
         ),
         (
             "delete-email",
-            "delete-email <Name>",
+            "delete-email",
             "Delete email of the contact",
         ),
         (
@@ -168,6 +168,31 @@ class Contacts(UserDict, CmdProvider):
             "delete-address <Name>",
             "Delete address of the contact",
         ),
+        (
+            "find-contact",
+            "find-contact",
+            "Find a contact in the address book",
+        ),
+        (
+            "find-phone",
+            "find-phone",
+            "Find a phone in the address book",
+        ),
+        (
+            "find-email",
+            "find-email",
+            "Find an email in the address book",
+        ),
+        (
+            "find-birthday",
+            "find-birthday",
+            "Find a birthday in the address book",
+        ),
+        (
+            "find-address",
+            "find-address",
+            "Find an address in the address book",
+        ),
         (   "all-contacts", "all-contacts", "Show the complete list of contacts")
     )
 
@@ -189,6 +214,11 @@ class Contacts(UserDict, CmdProvider):
         self.cmds["add-address"] = self.add_address
         self.cmds["edit-address"] = self.edit_address
         self.cmds["delete-address"] = self.delete_address
+        self.cmds["find-contact"] = self.find_contact
+        self.cmds["find-phone"] = self.find_phone
+        self.cmds["find-email"] = self.find_email
+        self.cmds["find-birthday"] = self.find_birthday
+        self.cmds["find-address"] = self.address
         self.cmds["all-contacts"] = self.all_contacts
 
     def __str__(self):
@@ -234,12 +264,15 @@ class Contacts(UserDict, CmdProvider):
         self.data[new_name] = contact
         return f"Contact {name} was renamed to {new_name}"
 
-    def delete_contact(self, args):
-        (name,) = args
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
-        self.data[name].contact = None
-        return "Contact {name} was deleted from to address book"
+    def delete_contact(self, args): #DONE
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name]
+        list_of_prompts = ["Name: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        name = data[0].value
+        self.data.pop(name)
+        return f"Contact '{name}' was deleted from to address book"
 
     def add_phone(self, args):
         (name, phone) = args
@@ -249,17 +282,7 @@ class Contacts(UserDict, CmdProvider):
         return "Phone {phone} was set for contact {name}"
  
     def edit_phone(self, args):
-        (name, new_name) = args
-        good_name = Name(name)
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
-        good_new_name = Name(new_name)
-        if new_name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(new_name))
-        phone = self.data.pop(name)
-        phone.name = good_new_name
-        self.data[new_name] = phone
-        return f"Phone {name} was renamed to {new_name}"
+         return self.add_phone(args) #DONE
 
     def delete_phone(self, args):
         (name,) = args
@@ -268,32 +291,28 @@ class Contacts(UserDict, CmdProvider):
         self.data[name].phone = None
         return "Phone was deleted from contact {name}"
 
-    def add_email(self, args):
-        (name, email) = args
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
-        self.data[name].email = Email(email)
-        return "Email {email} was set for contact {name}"  
+    def add_email(self, args): #DONE
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name, Email]
+        list_of_prompts = ["Name: ", "Email: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        name = data[0].value
+        self.data[name].email = data[1]
+        return f"Email {data[1].value} was set for contact {name}"
 
     def edit_email(self, args):
-        (name, new_name) = args
-        good_name = Name(name)
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
-        good_new_name = Name(new_name)
-        if new_name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(new_name))
-        email = self.data.pop(name)
-        email.name = good_new_name
-        self.data[new_name] = email
-        return f"Email {name} was renamed to {new_name}"
+        return self.add_email(args) #DONE
 
-    def delete_email(self, args):
-        (name,) = args
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+    def delete_email(self, args): #DONE
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name]
+        list_of_prompts = ["Name: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        name = data[0].value
         self.data[name].email = None
-        return "Email was deleted from contact {name}"
+        return f"Email was deleted from contact {name}"
 
     def add_birthday(self, args):
         # TODO
