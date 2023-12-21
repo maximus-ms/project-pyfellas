@@ -205,4 +205,4 @@ class Bot(CmdProvider):
             # print(e)
             # pass
 
-            self.book.save_to_file()
+        self.book.save_to_file()
