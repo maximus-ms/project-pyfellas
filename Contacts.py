@@ -9,6 +9,9 @@ class Name(Field):
 
     def validate(self, name: str):
         name = name.strip()
+        parts = name.split()
+        if len(parts) > 1:
+            raise ErrorWithMsg("Name must be a single word")
         if type(name) is str and len(name) > 0:
             return name
         raise ErrorWithMsg("Name must be a string")
