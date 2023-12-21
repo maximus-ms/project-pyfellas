@@ -172,9 +172,6 @@ class Notes(UserDict, CmdProvider):
             raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
         return str(self.data.get(topic))
 
-    def sort_notes_by_tags(self, notes_dict):
-        return notes_dict.values()
-
     def mixed_search_notes_by_tags(self, search_tags):
         relevant_notes = []
         for note in self.data.values():
