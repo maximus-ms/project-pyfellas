@@ -73,9 +73,12 @@ class Notes(UserDict, CmdProvider):
         self.cmds["all-notes"] = self.show_all_notes
 
     def __str__(self):
+        return "\n".join(self.get_str_list_of_notes())
+
+    def get_str_list_of_notes(self):
         if len(self.data) == 0:
             raise ErrorWithMsg(Notes.ERROR_EMPTY_NOTES_LIST)
-        return '\n'.join([str(note) for note in self.data.values()])
+        return [str(note) for note in self.data.values()]
 
     def help(self):
         return Notes.cmds_help
@@ -84,6 +87,8 @@ class Notes(UserDict, CmdProvider):
         return self.cmds[cmd](args)
 
     def add_note(self, args):
+        if len(args) < 1:
+            raise ValueError
         topic = args[0]
         text = ' '.join(args[1:])
         self.data[topic] = Note(topic, text)
@@ -98,6 +103,8 @@ class Notes(UserDict, CmdProvider):
         return f"Note with topic '{old_topic}' has been renamed to '{new_topic}'."
 
     def edit_note(self, args):
+        if len(args) < 1:
+            raise ValueError
         topic = args[0]
         new_text = ' '.join(args[1:])
         if topic not in self.data:
@@ -160,4 +167,4 @@ class Notes(UserDict, CmdProvider):
     def show_all_notes(self, args):
         if len(args) > 0:
             raise ValueError
-        return str(self)
+        return self.get_str_list_of_notes()

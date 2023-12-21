@@ -6,7 +6,8 @@ from rich.console import Console, Text
 
 
 class Bot(CmdProvider):
-    HELLO_MSG = "Hi, this is your assistant."
+    HELLO_MSG = "Hi, this is your assistant"
+    HELLO_HELP_MSG = "  ('h|help' for detailed information)"
     PROMPT_MSG = ">>> "
     INVALID_CMD_MSG = "Invalid command!"
     HELP_MESSAGE_HEAD = "\n List of supported commands:"
@@ -14,7 +15,7 @@ class Bot(CmdProvider):
     PARSING_ERROR_MSG_CMDS_FORMAT = "{}\nExpected format: {}"
     MSG_STYLE_DEFAULT = None
     MSG_STYLE_ERROR = "red"
-    MSG_STYLE_OK = "dark_blue"
+    MSG_STYLE_OK = "green"
 
     __cmds_help = (
         ("help", "h|help", "Show this message."),
@@ -99,7 +100,7 @@ class Bot(CmdProvider):
         for h1, h2 in help_dict.items():
             txt_list.append(Bot.HELP_MSG_CMDS_FORMAT.format(h1, h2))
         txt_list.append("")
-        return "\n".join(txt_list)
+        return txt_list
 
     def exe_cmd(self, cmd, args):
         try:
@@ -126,16 +127,51 @@ class Bot(CmdProvider):
             ret = "__unknown_cmd", (None,)
         return ret
 
-    def run(self):
-        self.console.print(Bot.HELLO_MSG, style="bold green")
-        while not self.__finish:
-            self.__is_error = False
-            cmd, args = self.get_input(Bot.PROMPT_MSG)
-            res = self.exe_cmd(cmd, args)
-            if self.__is_error:
-                style = Bot.MSG_STYLE_ERROR
-            else:
-                style = Bot.MSG_STYLE_OK
-            self.console.print(res, style=style)
+    def print_all(self, data, style=None):
+        if not isinstance(data, (list, tuple)):
+            self.console.print(str(data), style=style, highlight=False)
+            return
+        # will print in chunks
+        self.console.height
+        chunk_size = self.console.height - 1
+        data_parts = [
+            data[x : x + chunk_size] for x in range(0, len(data), chunk_size)
+        ]
+        prompt = Text(
+            "-- press enter for more lines ('q' or ctrl+c to skip) --",
+            style="grey0",
+        )
+        index = 0
+        try:
+            for part in data_parts:
+                self.console.print(
+                    "\n".join(part), style=style, highlight=False
+                )
+                index += chunk_size
+                if index >= len(data):
+                    break
+                in_data = self.console.input(prompt)
+                # print("\x1b[1A\x1b[2K", end="")
+                if in_data == "q" or in_data == "Q":
+                    break
+        except:
+            # print("\x1b[1A\x1b[2K", end="")
+            self.console.print()
+            pass
 
-        self.book.save_to_file()
+    def run(self):
+        self.console.print(Bot.HELLO_MSG, style="green", highlight=False)
+        self.console.print(Bot.HELLO_HELP_MSG, style="grey0", highlight=False)
+        # try:
+        if 1:
+            while not self.__finish:
+                self.__is_error = False
+                cmd, args = self.get_input(Bot.PROMPT_MSG)
+                res = self.exe_cmd(cmd, args)
+                if self.__is_error:
+                    style = Bot.MSG_STYLE_ERROR
+                else:
+                    style = Bot.MSG_STYLE_OK
+                self.print_all(res, style=style)
+            # except:
+            self.book.save_to_file()

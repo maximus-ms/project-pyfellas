@@ -2,6 +2,7 @@ from BaseClasses import *
 from datetime import datetime
 import re
 
+
 class Name(Field):
     """Class for storing a contact's name. Mandatory field."""
 
@@ -35,23 +36,27 @@ class Birthday(Field):
             raise ErrorWithMsg("Invalid birthday format (DD.MM.YYYY)")
         return birthday
 
+
 class Address(Field):
     """Class for Contact`s Address validation and storing"""
 
     def validate(self, address):
         address = address.strip()
         return address
-    
+
+
 class Email(Field):
-    """Class for validation emails. Validate the format (Exa.maple@exam.ple) """
+    """Class for validation emails. Validate the format (Exa.maple@exam.ple)"""
 
     def validate(self, email):
         email = email.strip()
         try:
-            result = re.match(r'\b[a-z]{1}[\w\.\-\_]+@[\w\.\-\_]+\.[a-z]{2,}', email.lower()).group()
-        except: 
+            result = re.match(
+                r"\b[a-z]{1}[\w\.\-\_]+@[\w\.\-\_]+\.[a-z]{2,}", email.lower()
+            ).group()
+        except:
             raise ErrorWithMsg("Invalid email format")
-        return result 
+        return result
 
 
 class Contacts(CmdProvider):
@@ -61,12 +66,12 @@ class Contacts(CmdProvider):
             "rename-contact",
             "rename-contact <Old_name> <New_name>",
             "Rename existing contact",
-        ),  
+        ),
         (
             "delete-contact",
             "delete-contact <Name>",
             "Delete existing contact",
-        ),   
+        ),
         (
             "add-phone",
             "add-phone <Name> <Phone_number>",
@@ -90,14 +95,14 @@ class Contacts(CmdProvider):
         (
             "edit-email",
             "edit-email <Name> <New_email>",
-            "Edit email number of the contact",
+            "Edit email of the contact",
         ),
         (
             "delete-email",
             "delete-email <Name>",
             "Delete email of the contact",
         ),
-         (
+        (
             "add-birthday",
             "add-birthday <Name> <Birthday>",
             "Add birthday to the contact",
@@ -111,7 +116,7 @@ class Contacts(CmdProvider):
             "delete-birthday",
             "delete-birthday <Name>",
             "Delete birthday of the contact",
-        ),       
+        ),
         (
             "add-address",
             "add-address <Name> <Address>",
@@ -126,9 +131,8 @@ class Contacts(CmdProvider):
             "delete-address",
             "delete-address <Name>",
             "Delete address of the contact",
-        ),    
+        ),
     )
-
 
     def __init__(self) -> None:
         self.cmds = {}
@@ -146,8 +150,7 @@ class Contacts(CmdProvider):
         self.cmds["delete-birthday"] = self.delete_birthday
         self.cmds["add-address"] = self.add_address
         self.cmds["edit-address"] = self.edit_address
-        self.cmds["delete-address"] = self.delete_address 
-        # ....
+        self.cmds["delete-address"] = self.delete_address
 
     def help(self):
         return Contacts.cmds_help
@@ -157,62 +160,57 @@ class Contacts(CmdProvider):
 
     def add_contact(self, args):
         (name,) = args
-        # TODO new_record = Record(Name(name).value)
-
+        # TODO
         return f"Contact '{name}' was added."
 
     def rename_contact(self, args):
-        # TODO 
-        return "" 
+        # TODO
+        return ""
 
     def delete_contact(self, args):
-        # TODO 
-        return "" 
+        # TODO
+        return ""
 
     def add_phone(self, args):
-        # TODO 
-        return "" 
+        # TODO
+        return ""
 
     def edit_phone(self, args):
-        # TODO 
-        return "" 
+        return self.add_phone(args)
 
     def delete_phone(self, args):
-        # TODO 
-        return ""   
-              
+        # TODO
+        return ""
+
     def add_email(self, args):
-        # TODO 
-        return "" 
+        # TODO
+        return ""
 
     def edit_email(self, args):
-        # TODO 
-        return "" 
+        return self.add_email(args)
 
     def delete_email(self, args):
-        # TODO 
+        # TODO
         return ""
-        
+
     def add_birthday(self, args):
-        # TODO 
-        return "" 
+        # TODO
+        return ""
 
     def edit_birthday(self, args):
-        # TODO 
-        return "" 
+        return self.add_birthday(args)
 
     def delete_birthday(self, args):
-        # TODO 
-        return ""     
+        # TODO
+        return ""
 
     def add_address(self, args):
-        # TODO 
-        return "" 
+        # TODO
+        return ""
 
     def edit_address(self, args):
-        # TODO 
-        return "" 
+        return self.add_address(args)
 
     def delete_address(self, args):
-        # TODO 
-        return ""  
+        # TODO
+        return ""
