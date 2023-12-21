@@ -269,10 +269,10 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data.pop(name)
-        return f"Contact '{name}' was deleted from to address book"
+        return f"Contact '{name}' was deleted from address book"
 
     def add_phone(self, args):
         (name, phone) = args
@@ -282,7 +282,7 @@ class Contacts(UserDict, CmdProvider):
         return "Phone {phone} was set for contact {name}"
  
     def edit_phone(self, args):
-         return self.add_phone(args) #DONE
+        return self.add_phone(args) #DONE
 
     def delete_phone(self, args):
         (name,) = args
@@ -296,10 +296,10 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Email]
         list_of_prompts = ["Name: ", "Email: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data[name].email = data[1]
-        return f"Email {data[1].value} was set for contact {name}"
+        return f"Email {data[1].value} was set for contact '{name}'"
 
     def edit_email(self, args):
         return self.add_email(args) #DONE
@@ -309,10 +309,10 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
         name = data[0].value
         self.data[name].email = None
-        return f"Email was deleted from contact {name}"
+        return f"Email was deleted from contact '{name}'"
 
     def add_birthday(self, args):
         # TODO
