@@ -131,6 +131,7 @@ class Bot(CmdProvider):
             return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
                 Bot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
             )
+        #TODO enable this exception catch
         # except Exception as e:
         #     return str(e)
 
@@ -148,7 +149,6 @@ class Bot(CmdProvider):
             cmd, *args = user_input.split()
             ret = cmd.strip().lower(), args
         except Exception as e:
-            # print(e)
             self.__is_error = True
             ret = "__unknown_cmd", (None,)
         return ret
@@ -174,11 +174,9 @@ class Bot(CmdProvider):
                 if index >= len(data):
                     break
                 in_data = CLI.input(prompt)
-                # print("\x1b[1A\x1b[2K", end="")
                 if in_data == "q" or in_data == "Q":
                     break
         except:
-            # print("\x1b[1A\x1b[2K", end="")
             CLI.print()
             pass
 

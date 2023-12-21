@@ -69,7 +69,9 @@ class Contact:
         self.address = address
 
     def __str__(self):
-        text = f"Name: {self.name}, phone: {self.phone}"
+        text = f"Name: {self.name}"
+        if self.phone and self.phone.value:
+            text += f", phone: {self.phone}"
         if self.email and self.email.value:
             text += f", e-mail: {self.email}"
         if self.birthday and self.birthday.value:
@@ -91,11 +93,11 @@ class Contact:
             self.address = Address(address)
 
 class Contacts(UserDict, CmdProvider):
-    ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact {} already exists"
+    ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact '{}' already exists"
     ERROR_MESSAGE_CONTACT_NOT_FOUND = "Contact is not found"
     ERROR_EMPTY_CONTACTS_LIST = "Contacts list is empty. Please add some contacts first"
     cmds_help = (
-        ("add-contact", "add-contact <Name>", "Add contact to address book"),
+        ("add-contact", "add-contact", "Add contact to address book"),
         (
             "rename-contact",
             "rename-contact <Old_name> <New_name>",
@@ -203,15 +205,20 @@ class Contacts(UserDict, CmdProvider):
     def exe(self, cmd, args):
         return self.cmds[cmd](args)
 
-    def add_contact(self, args):
-        (name,) = args
+    def assert_name_is_free(self, name):
         good_name = Name(name)
         if name in self.data:
             raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(name))
-        list_of_types = [Phone, Email, Birthday, Address]
-        list_of_prompts = ["Phone: ", "Email: ", "Birthday: ", "Address: ",]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts)
-        self.data[name] = Contact(good_name, data[0], data[1], data[2], data[3])
+        pass
+
+    def add_contact(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name, Phone, Email, Birthday, Address]
+        list_of_prompts = ["Name: ", "Phone: ", "Email: ", "Birthday: ", "Address: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_is_free)
+        name = data[0].value
+        self.data[name] = Contact(data[0], data[1], data[2], data[3], data[4])
         return f"Contact '{name}' was added."
 
     def rename_contact(self, args):
