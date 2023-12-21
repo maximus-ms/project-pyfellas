@@ -13,7 +13,11 @@ class CLI:
     input = console.input
 
 
-def get_extra_data_from_user(list_of_types, list_of_prompts, assert_validator=None, mandatory_first_entry=True):
+def get_extra_data_from_user(list_of_types,
+                             list_of_prompts,
+                             assert_validator=None,
+                             mandatory_first_entry=True,
+                             mandatory_all_entrys=False):
     first_entry = True
     num = min(len(list_of_types), len(list_of_prompts))
     data = [None] * num
