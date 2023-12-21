@@ -13,7 +13,8 @@ class CLI:
     input = console.input
 
 
-def get_extra_data_from_user(list_of_types, list_of_prompts):
+def get_extra_data_from_user(list_of_types, list_of_prompts, validator=None):
+    not_first_entry = False
     num = min(len(list_of_types), len(list_of_prompts))
     data = [None] * num
     for i in range(num):
@@ -22,9 +23,10 @@ def get_extra_data_from_user(list_of_types, list_of_prompts):
             try:
                 user_data = CLI.input(current_prompt)
                 user_data = user_data.strip()
-                if len(user_data) == 0:
+                if len(user_data) == 0 and not_first_entry:
                     break
                 data[i] = list_of_types[i](user_data)
+                not_first_entry = True
                 break
             except KeyboardInterrupt:
                 CLI.print()
