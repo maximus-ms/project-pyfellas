@@ -1,7 +1,7 @@
 import re
 from collections import UserDict
 
-from BaseClasses import CmdProvider, ErrorWithMsg, Field
+from BaseClasses import CmdProvider, ErrorWithMsg, Field, get_extra_data_from_user
 
 
 class Topic(Field):
@@ -22,13 +22,22 @@ class Text(Field):
         return text
 
 
+class Tags(Field):
+
+    def validate(self, tags: str) -> list[str]:
+        if not isinstance(tags, str):
+            raise ErrorWithMsg("Tags must be a string.")
+        tags_list = tags.strip().replace("#", "").split()
+        return tags_list
+
+
 class Note:
 
-    def __init__(self, topic: str, text: str = "", tags: [str] = None):
-        self.topic = Topic(topic)
-        self.text = Text(text)
-        self.text_tags = self.extract_hashtags(text)
-        self.user_tags = tags or []
+    def __init__(self, topic: Topic, text: Text, tags: Tags):
+        self.topic = topic
+        self.text = text
+        self.text_tags = self.extract_hashtags(text.value)
+        self.user_tags = tags.value or []
 
     @staticmethod
     def extract_hashtags(text: str):
@@ -37,18 +46,24 @@ class Note:
         return hashtag_words
 
     def __str__(self):
-        text_value = self.text.value if self.text.value is not None else "No text"
-        return f"Topic: {self.topic.value}, Text: {text_value}, Text tags: {self.text_tags}, " \
-               f"User tags: {self.user_tags}"
+        note_text = f"Topic: {self.topic}"
+        if self.text and self.text.value:
+            note_text += f", text: {self.text}"
+        if self.text_tags:
+            note_text += f", text tags: {', '.join(self.text_tags)}"
+        if self.user_tags:
+            note_text += f", user tags: {', '.join(self.user_tags)}"
+        return note_text
 
 
 class Notes(UserDict, CmdProvider):
     ERROR_MESSAGE_NOTE_NOT_FOUND = "Note is not found"
     ERROR_MESSAGE_TAG_NOT_FOUND = "Tag is not found"
     ERROR_EMPTY_NOTES_LIST = "Notes list is empty. Please add some notes first"
+    ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact {} already exists"
 
     cmds_help = (
-        ("add-note", "add-note <Topic>", "Add a note to notebook"),
+        ("add-note", "add-note", "Add a note to notebook"),
         ("rename-note", "rename-note <Topic> <New Topic>", "Rename note topic"),
         ("edit-note", "edit-note <Topic> <Text>", "Edit note text"),
         ("delete-note", "delete-note <Topic>", "Delete a note from notebook"),
@@ -69,7 +84,7 @@ class Notes(UserDict, CmdProvider):
         self.cmds["add-tag"] = self.add_tag
         self.cmds["delete-tag"] = self.delete_tag
         self.cmds["find-note"] = self.find_note_by_topic
-        self.cmds["find-by-tag"] = self.find_notes_by_tag
+        self.cmds["find-by-tag"] = self.mixed_search_notes_by_tags
         self.cmds["all-notes"] = self.show_all_notes
 
     def __str__(self):
@@ -86,12 +101,19 @@ class Notes(UserDict, CmdProvider):
     def exe(self, cmd, args):
         return self.cmds[cmd](args)
 
+    def assert_topic_is_absent(self, topic: str) -> None:
+        if topic in self.data:
+            raise ErrorWithMsg(Notes.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(topic))
+        pass
+
     def add_note(self, args):
-        if len(args) < 1:
+        if len(args) > 0:
             raise ValueError
-        topic = args[0]
-        text = ' '.join(args[1:])
-        self.data[topic] = Note(topic, text)
+        list_of_types = [Topic, Text, Tags]
+        list_of_prompts = ["Topic: ", "Text: ", "Tags: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_is_absent)
+        topic = data[0].value
+        self.data[topic] = Note(data[0], data[1], data[2])
         return f"Note with topic '{topic}' was added."
 
     def rename_note(self, args):
@@ -150,19 +172,27 @@ class Notes(UserDict, CmdProvider):
             raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
         return str(self.data.get(topic))
 
-    def sort_notes_by_tags(self, notes_dict):
-        return notes_dict.values()
-
-    def find_notes_by_tag(self, args):
-        # TODO concatenate tags and sort and break if first found and save tag of matched note
-        # {"tag": "note"} --> list(notes)
-        notes_dict = {}
-        search_tags = set(args)
-        matching_notes = []
+    def mixed_search_notes_by_tags(self, search_tags):
+        relevant_notes = []
         for note in self.data.values():
-            if search_tags.intersection(set(note.tags)):
-                matching_notes.append(str(note))
-        return self.sort_notes_by_tags(notes_dict)
+            note_tags = note.user_tags + note.text_tags
+            relevance = 0
+            # Calculate relevance: count of matching tags
+            relevance = len(set(search_tags).intersection(note_tags))
+            relevance = relevance * 2  # Let full match has more priority
+            # Check for partial matching
+            for search_tag in search_tags:
+                for tag in note_tags:
+                    if search_tag.lower() in tag.lower():
+                        relevance += 1  # Increase relevance for partial match
+            if relevance > 0:
+                # Append note and relevance as tuple to relevant_notes list
+                relevant_notes.append((note, relevance))
+        # Sort notes by relevance (highest to lowest)
+        relevant_notes.sort(key=lambda x: x[1], reverse=True)
+        # Extract sorted notes without relevance
+        sorted_notes = [note[0] for note in relevant_notes]
+        return [str(note) for note in sorted_notes]
 
     def show_all_notes(self, args):
         if len(args) > 0:
