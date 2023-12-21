@@ -16,6 +16,16 @@ class Name(Field):
             return name
         raise ErrorWithMsg("Name must be a string")
 
+class Number(Field):
+    """Class for storing a contact's name. Mandatory field."""
+
+    def validate(self, number: str):
+        try:
+            value = int(number)
+        except:
+            raise ErrorWithMsg("Must be a number")
+        return value
+
 
 class Phone(Field):
     """Class for storing a phone number. Validates the format (10 digits)."""
@@ -99,6 +109,7 @@ class Contacts(UserDict, CmdProvider):
     ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact '{}' already exists"
     ERROR_MESSAGE_CONTACT_NOT_FOUND = "Contact is not found"
     ERROR_EMPTY_CONTACTS_LIST = "Contacts list is empty. Please add some contacts first"
+    BIRTHDAYS_NUM_OF_DAYS = 7
     cmds_help = (
         ("add-contact", "add-contact", "Add contact to address book"),
         (
@@ -171,7 +182,8 @@ class Contacts(UserDict, CmdProvider):
             "delete-address <Name>",
             "Delete address of the contact",
         ),
-        (   "all-contacts", "all-contacts", "Show the complete list of contacts")
+        (   "birthdays", "birthdays [<x_days>]", "Show list of birthdays for the next X days"),
+        (   "all-contacts", "all-contacts", "Show the complete list of contacts"),
     )
 
     def __init__(self) -> None:
@@ -192,6 +204,7 @@ class Contacts(UserDict, CmdProvider):
         self.cmds["add-address"] = self.add_address
         self.cmds["edit-address"] = self.edit_address
         self.cmds["delete-address"] = self.delete_address
+        self.cmds["birthdays"] = self.birthdays
         self.cmds["all-contacts"] = self.all_contacts
 
     def __str__(self):
@@ -293,3 +306,32 @@ class Contacts(UserDict, CmdProvider):
 
     def all_contacts(self, args):
         return self.get_str_list_of_contacts()
+
+    def repack_birthdays_for_search(self):
+        birthday_list = []
+        for contact in self.data.values():
+            if contact.birthday:
+                entry = {
+                        "text": str(contact),
+                        "event": datetime.strptime(contact.birthday.value, "%d.%m.%Y"),
+                    }
+                birthday_list.append(entry)
+        return birthday_list
+
+    def birthdays(self, args):
+        num_of_days = Contacts.BIRTHDAYS_NUM_OF_DAYS
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Number]
+        list_of_prompts = [f"Days (default {num_of_days}): "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, mandatory_first_entry=False)
+        if not data[0] is None:
+            num_of_days = data[0].value
+        res_birthday_list = []
+        if num_of_days > 0:
+            birthday_list = self.repack_birthdays_for_search()
+            res_birthday_list = get_entries_for_next_x_days(birthday_list, num_of_days)
+        if len(res_birthday_list) == 0:
+            return f"No birthdays for next {num_of_days} days"
+        return res_birthday_list
+
