@@ -16,7 +16,7 @@ class Book:
         try:
             with open(self.filename, "rb") as f:
                 data = pickle.load(f)
-                self.contact = data.get("contacts", Contacts())
+                self.contacts = data.get("contacts", Contacts())
                 self.notes = data.get("notes", Notes())
         except:
             pass

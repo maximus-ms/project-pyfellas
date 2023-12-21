@@ -1,6 +1,7 @@
-from BaseClasses import *
+from collections import UserDict
 from datetime import datetime
 import re
+from BaseClasses import *
 
 
 class Name(Field):
@@ -9,8 +10,6 @@ class Name(Field):
     def validate(self, name: str):
         name = name.strip()
         if type(name) is str and len(name) > 0:
-            pass
-        elif type(name) is str:
             return name
         raise ErrorWithMsg("Name must be a string")
 
@@ -59,7 +58,42 @@ class Email(Field):
         return result
 
 
-class Contacts(CmdProvider):
+class Contact:
+    """Class for storing contact information, including name, phone, etc."""
+
+    def __init__(self, name:Name, phone=Phone(), email=Email(), birthday=Birthday(), address=Address()):
+        self.name = name
+        self.phone = phone
+        self.email = email
+        self.birthday = birthday
+        self.address = address
+
+    def __str__(self):
+        text = f"Name: {self.name}, phone: {self.phone}"
+        if self.email and self.email.value:
+            text += f", e-mail: {self.email}"
+        if self.birthday and self.birthday.value:
+            text += f", birthday: {self.birthday}"
+        if self.address and self.address.value:
+            text += f", address: {self.address}"
+        return text
+
+    def set_all(self, name:str=None, phone:str=None, email:str=None, birthday:str=None, address:str=None):
+        if not name is None:
+            self.name = Name(name)
+        if not phone is None:
+            self.phone = Phone(phone)
+        if not email is None:
+            self.email = Email(email)
+        if not birthday is None:
+            self.birthday = Birthday(birthday)
+        if not address is None:
+            self.address = Address(address)
+
+class Contacts(UserDict, CmdProvider):
+    ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact {} already exists"
+    ERROR_MESSAGE_CONTACT_NOT_FOUND = "Contact is not found"
+    ERROR_EMPTY_CONTACTS_LIST = "Contacts list is empty. Please add some contacts first"
     cmds_help = (
         ("add-contact", "add-contact <Name>", "Add contact to address book"),
         (
@@ -132,9 +166,11 @@ class Contacts(CmdProvider):
             "delete-address <Name>",
             "Delete address of the contact",
         ),
+        (   "all-contacts", "all-contacts", "Show the complete list of contacts")
     )
 
     def __init__(self) -> None:
+        super().__init__()
         self.cmds = {}
         self.cmds["add-contact"] = self.add_contact
         self.cmds["rename-contact"] = self.rename_contact
@@ -151,6 +187,15 @@ class Contacts(CmdProvider):
         self.cmds["add-address"] = self.add_address
         self.cmds["edit-address"] = self.edit_address
         self.cmds["delete-address"] = self.delete_address
+        self.cmds["all-contacts"] = self.all_contacts
+
+    def __str__(self):
+        return "\n".join(self.get_str_list_of_contacts())
+
+    def get_str_list_of_contacts(self):
+        if len(self.data) == 0:
+            raise ErrorWithMsg(Contacts.ERROR_EMPTY_CONTACTS_LIST)
+        return [str(note) for note in self.data.values()]
 
     def help(self):
         return Contacts.cmds_help
@@ -160,27 +205,48 @@ class Contacts(CmdProvider):
 
     def add_contact(self, args):
         (name,) = args
-        # TODO
+        good_name = Name(name)
+        if name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(name))
+        list_of_types = [Phone, Email, Birthday, Address]
+        list_of_prompts = ["Phone: ", "Email: ", "Birthday: ", "Address: ",]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts)
+        self.data[name] = Contact(good_name, data[0], data[1], data[2], data[3])
         return f"Contact '{name}' was added."
 
     def rename_contact(self, args):
-        # TODO
-        return ""
+        (name, new_name) = args
+        good_name = Name(name)
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        good_new_name = Name(new_name)
+        if new_name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(new_name))
+        contact = self.data.pop(name)
+        contact.name = good_new_name
+        self.data[new_name] = contact
+        return f"Contact {name} was renamed to {new_name}"
 
     def delete_contact(self, args):
         # TODO
         return ""
 
     def add_phone(self, args):
-        # TODO
-        return ""
+        (name, phone) = args
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        self.data[name].phone = Phone(phone)
+        return "Phone {phone} was set for contact {name}"
 
     def edit_phone(self, args):
         return self.add_phone(args)
 
     def delete_phone(self, args):
-        # TODO
-        return ""
+        (name,) = args
+        if not name in self.data:
+            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND)
+        self.data[name].phone = None
+        return "Phone was deleted from contact {name}"
 
     def add_email(self, args):
         # TODO
@@ -214,3 +280,6 @@ class Contacts(CmdProvider):
     def delete_address(self, args):
         # TODO
         return ""
+
+    def all_contacts(self, args):
+        return self.get_str_list_of_contacts()

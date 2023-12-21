@@ -2,7 +2,7 @@ from collections import defaultdict, OrderedDict
 from BaseClasses import *
 from Book import Book
 
-from rich.console import Console, Text
+from rich.console import Text
 
 
 class Bot(CmdProvider):
@@ -13,9 +13,6 @@ class Bot(CmdProvider):
     HELP_MESSAGE_HEAD = "\n List of supported commands:"
     HELP_MSG_CMDS_FORMAT = "    {:<35} : {}"
     PARSING_ERROR_MSG_CMDS_FORMAT = "{}\nExpected format: {}"
-    MSG_STYLE_DEFAULT = None
-    MSG_STYLE_ERROR = "red"
-    MSG_STYLE_OK = "green"
 
     __cmds_help = (
         ("help", "h|help", "Show this message."),
@@ -28,7 +25,6 @@ class Bot(CmdProvider):
     def __init__(self, book: Book):
         self.__finish = False
         self.__is_error = False
-        self.console = Console()
         self.cmds = {
             "help": self.get_help_message,
             "h": self.get_help_message,
@@ -114,12 +110,12 @@ class Bot(CmdProvider):
             return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
                 Bot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
             )
-        except Exception as e:
-            return str(e)
+        # except Exception as e:
+        #     return str(e)
 
     def get_input(self, message):
         try:
-            user_input = input(message)
+            user_input = CLI.input(message)
             cmd, *args = user_input.split()
             ret = cmd.strip().lower(), args
         except:
@@ -127,51 +123,49 @@ class Bot(CmdProvider):
             ret = "__unknown_cmd", (None,)
         return ret
 
-    def print_all(self, data, style=None):
+    def print_all(data, style=None):
         if not isinstance(data, (list, tuple)):
-            self.console.print(str(data), style=style, highlight=False)
+            CLI.print(str(data), style=style, highlight=False)
             return
         # will print in chunks
-        self.console.height
-        chunk_size = self.console.height - 1
+        chunk_size = CLI.console.height - 1
         data_parts = [
             data[x : x + chunk_size] for x in range(0, len(data), chunk_size)
         ]
         prompt = Text(
             "-- press enter for more lines ('q' or ctrl+c to skip) --",
-            style="grey0",
+            style=CLI.MSG_STYLE_HINT,
         )
         index = 0
         try:
             for part in data_parts:
-                self.console.print(
-                    "\n".join(part), style=style, highlight=False
-                )
+                CLI.print("\n".join(part), style=style, highlight=False)
                 index += chunk_size
                 if index >= len(data):
                     break
-                in_data = self.console.input(prompt)
+                in_data = CLI.input(prompt)
                 # print("\x1b[1A\x1b[2K", end="")
                 if in_data == "q" or in_data == "Q":
                     break
         except:
             # print("\x1b[1A\x1b[2K", end="")
-            self.console.print()
+            CLI.print()
             pass
 
     def run(self):
-        self.console.print(Bot.HELLO_MSG, style="green", highlight=False)
-        self.console.print(Bot.HELLO_HELP_MSG, style="grey0", highlight=False)
+        CLI.print(Bot.HELLO_MSG, style=CLI.MSG_STYLE_WELCOME, highlight=False)
+        CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
         # try:
         if 1:
+            bot_prompt_text = Text(Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT)
             while not self.__finish:
                 self.__is_error = False
-                cmd, args = self.get_input(Bot.PROMPT_MSG)
+                cmd, args = self.get_input(bot_prompt_text)
                 res = self.exe_cmd(cmd, args)
                 if self.__is_error:
-                    style = Bot.MSG_STYLE_ERROR
+                    style = CLI.MSG_STYLE_ERROR
                 else:
-                    style = Bot.MSG_STYLE_OK
-                self.print_all(res, style=style)
+                    style = CLI.MSG_STYLE_OK
+                Bot.print_all(res, style=style)
             # except:
             self.book.save_to_file()

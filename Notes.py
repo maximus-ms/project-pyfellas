@@ -24,7 +24,7 @@ class Text(Field):
 
 class Note:
 
-    def __init__(self, topic: str, text: str = "", tags: list[str] = None):
+    def __init__(self, topic: str, text: str = "", tags: [str] = None):
         self.topic = Topic(topic)
         self.text = Text(text)
         self.text_tags = self.extract_hashtags(text)

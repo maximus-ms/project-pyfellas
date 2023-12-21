@@ -1,4 +1,37 @@
 from abc import ABC, abstractmethod
+from rich.console import Console, Text
+
+class CLI:
+    MSG_STYLE_DEFAULT = None
+    MSG_STYLE_WELCOME = "green"
+    MSG_STYLE_PROMPT = "magenta"
+    MSG_STYLE_OK = "green"
+    MSG_STYLE_ERROR = "red"
+    MSG_STYLE_HINT = "grey0"
+    console = Console()
+    print = console.print
+    input = console.input
+
+
+def get_extra_data_from_user(list_of_types, list_of_prompts):
+    num = min(len(list_of_types), len(list_of_prompts))
+    data = [None] * num
+    for i in range(num):
+        current_prompt = Text(list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT)
+        while True:
+            try:
+                user_data = CLI.input(current_prompt)
+                user_data = user_data.strip()
+                if len(user_data) == 0:
+                    break
+                data[i] = list_of_types[i](user_data)
+                break
+            except KeyboardInterrupt:
+                CLI.print()
+                return data
+            except ErrorWithMsg as er:
+                CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)
+    return data
 
 
 class ErrorWithMsg(Exception):
