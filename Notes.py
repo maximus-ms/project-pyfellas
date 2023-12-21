@@ -24,7 +24,7 @@ class Text(Field):
 
 class Tags(Field):
 
-    def validate(self, tags: str) -> list[str]:
+    def validate(self, tags: str) -> [str]:
         if not isinstance(tags, str):
             raise ErrorWithMsg("Tags must be a string.")
         tags_list = tags.strip().replace("#", "").split()

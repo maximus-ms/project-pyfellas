@@ -112,103 +112,27 @@ class Contacts(UserDict, CmdProvider):
     BIRTHDAYS_NUM_OF_DAYS = 7
     cmds_help = (
         ("add-contact", "add-contact", "Add contact to address book"),
-        (
-            "rename-contact",
-            "rename-contact <Old_name> <New_name>",
-            "Rename existing contact",
-        ),
-        (
-            "delete-contact",
-            "delete-contact",
-            "Delete existing contact",
-        ),
-        (
-            "add-phone",
-            "add-phone <Name> <Phone_number>",
-            "Add phone number to the contact",
-        ),
-        (
-            "edit-phone",
-            "edit-phone",
-            "Edit phone number of the contact",
-        ),
-        (
-            "delete-phone",
-            "delete-phone <Name>",
-            "Delete phone number of the contact",
-        ),
-        (
-            "add-email",
-            "add-email ",
-            "Add email to the contact",
-        ),
-        (
-            "edit-email",
-            "edit-email",
-            "Edit email of the contact",
-        ),
-        (
-            "delete-email",
-            "delete-email",
-            "Delete email of the contact",
-        ),
-        (
-            "add-birthday",
-            "add-birthday",
-            "Add birthday to the contact",
-        ),
-        (
-            "edit-birthday",
-            "edit-birthday",
-            "Edit birthday of the contact",
-        ),
-        (
-            "delete-birthday",
-            "delete-birthday",
-            "Delete birthday of the contact",
-        ),
-        (
-            "add-address",
-            "add-address",
-            "Add address to the contact",
-        ),
-        (
-            "edit-address",
-            "edit-address",
-            "Edit address of the contact",
-        ),
-        (
-            "delete-address",
-            "delete-address",
-            "Delete address of the contact",
-        ),
-        (
-            "find-contact",
-            "find-contact",
-            "Find a contact in the address book",
-        ),
-        (
-            "find-phone",
-            "find-phone",
-            "Find a phone in the address book",
-        ),
-        (
-            "find-email",
-            "find-email",
-            "Find an email in the address book",
-        ),
-        (
-            "find-birthday",
-            "find-birthday",
-            "Find a birthday in the address book",
-        ),
-        (
-            "find-address",
-            "find-address",
-            "Find an address in the address book",
-        ),
-        (   "birthdays", "birthdays [<x_days>]", "Show list of birthdays for the next X days"),
-        (   "all-contacts", "all-contacts", "Show the complete list of contacts"),
+        ("rename-contact","rename-contact","Rename existing contact"),
+        ("delete-contact","delete-contact","Delete existing contact"),
+        ("add-phone","add-phone","Add phone number to the contact"),
+        ("edit-phone","edit-phone","Edit phone number of the contact"),
+        ("delete-phone","delete-phone","Delete phone number of the contact"),
+        ("add-email","add-email ","Add email to the contact"),
+        ("edit-email","edit-email","Edit email of the contact"),
+        ("delete-email","delete-email","Delete email of the contact"),
+        ("add-birthday","add-birthday","Add birthday to the contact"),
+        ("edit-birthday","edit-birthday","Edit birthday of the contact"),
+        ("delete-birthday","delete-birthday","Delete birthday of the contact"),
+        ("add-address","add-address","Add address to the contact"),
+        ("edit-address","edit-address","Edit address of the contact"),
+        ("delete-address","delete-address","Delete address of the contact"),
+        ("find-contact","find-contact","Find a contact in the address book"),
+        ("find-phone","find-phone","Find a phone in the address book"),
+        ("find-email","find-email","Find an email in the address book"),
+        ("find-birthday","find-birthday","Find a birthday in the address book"),
+        ("find-address","find-address","Find an address in the address book"),
+        ("birthdays", "birthdays [x_days]", "Show birthdays for next X days"),
+        ("all-contacts", "all-contacts", "Show list of contacts"),
     )
 
     def __init__(self) -> None:
@@ -271,77 +195,84 @@ class Contacts(UserDict, CmdProvider):
         data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_is_free)
         name = data[0].value
         self.data[name] = Contact(data[0], data[1], data[2], data[3], data[4])
-        return f"Contact '{name}' was added."
+        return f"Contact '{name}' was added"
 
     def rename_contact(self, args):
-        (name, new_name) = args
-        good_name = Name(name)
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND.format(name))
-        good_new_name = Name(new_name)
-        if new_name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(new_name))
-        contact = self.data.pop(name)
-        contact.name = good_new_name
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name, Name]
+        list_of_prompts = ["Old name: ", "New name: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        old_name = data[0].value
+        new_name = data[1].value
+        self.assert_name_is_free(new_name)
+        contact = self.data.pop(old_name)
+        contact.name = new_name
         self.data[new_name] = contact
-        return f"Contact {name} was renamed to {new_name}"
+        return f"Contact '{old_name}' was renamed to '{new_name}'"
 
     def delete_contact(self, args): #DONE
         if len(args) > 0:
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
         name = data[0].value
         self.data.pop(name)
-        return f"Contact '{name}' was deleted from address book"
+        return f"Contact '{name}' was deleted"
 
     def add_phone(self, args):
-        (name, phone) = args
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND.format(name))
-        self.data[name].phone = Phone(phone)
-        return "Phone {phone} was set for contact {name}"
- 
-    def edit_phone(self, args):
-        return self.add_phone(args) #DONE
-
-    def delete_phone(self, args):
-        (name,) = args
-        if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND.format(name))
-        self.data[name].phone = None
-        return "Phone was deleted from contact {name}"
-
-    def add_email(self, args): #DONE
         if len(args) > 0:
             raise ValueError
-        list_of_types = [Name, Email]
-        list_of_prompts = ["Name: ", "Email: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        list_of_types = [Name, Phone]
+        list_of_prompts = ["Name: ", "Phone: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entries=True)
         name = data[0].value
-        self.data[name].email = data[1]
-        return f"Email {data[1].value} was set for contact '{name}'"
+        self.data[name].phone = data[1]
+        return f"Phone for '{name}' was set"
 
-    def edit_email(self, args):
-        return self.add_email(args) #DONE
+    def edit_phone(self, args):
+        return self.add_phone(args)
 
-    def delete_email(self, args): #DONE
+    def delete_phone(self, args):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        name = data[0].value
+        self.data[name].phone = None
+        return f"Phone for '{name}' was deleted"
+
+    def add_email(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name, Email]
+        list_of_prompts = ["Name: ", "Email: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entries=True)
+        name = data[0].value
+        self.data[name].email = data[1]
+        return f"Email for '{name}' was set"
+
+    def edit_email(self, args):
+        return self.add_email(args)
+
+    def delete_email(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name]
+        list_of_prompts = ["Name: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
         name = data[0].value
         self.data[name].email = None
-        return f"Email was deleted from contact '{name}'"
+        return f"Email for '{name}' was deleted"
 
     def add_birthday(self, args):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Name, Birthday]
         list_of_prompts = ["Name: ", "Birthday: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entries=True)
         name = data[0].value
         self.data[name].birthday = data[1]
         return  f"Birthday for '{name}' was set"
@@ -354,7 +285,7 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entries=True)
         name = data[0].value
         self.data[name].birthday = None
         return  f"Birthday for '{name}' was deleted"
@@ -364,7 +295,7 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Address]
         list_of_prompts = ["Name: ", "Address: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entries=True)
         name = data[0].value
         self.data[name].address = data[1]
         return  f"Address for '{name}' was set"
@@ -377,10 +308,30 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entrys=True)
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist, mandatory_all_entries=True)
         name = data[0].value
         self.data[name].address = None
         return  f"Address for '{name}' was deleted"
+
+    def find_contact(self, args):
+        #TODO
+        return "TODO find_contact"
+
+    def find_phone(self, args):
+        #TODO
+        return "TODO find_phone"
+
+    def find_email(self, args):
+        #TODO
+        return "TODO find_email"
+
+    def find_birthday(self, args):
+        #TODO
+        return "TODO find_birthday"
+
+    def address(self, args):
+        #TODO
+        return "TODO address"
 
     def all_contacts(self, args):
         return self.get_str_list_of_contacts()

@@ -3,7 +3,7 @@ from Book import Book
 
 
 def main():
-    book = Book("data.bin")
+    book = Book("assistant.data")
     bot = Bot(book)
     bot.run()
 

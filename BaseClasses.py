@@ -17,42 +17,6 @@ class CLI:
     input = console.input
 
 
-def get_extra_data_from_user(list_of_types,
-                             list_of_prompts,
-                             assert_validator=None,
-                             mandatory_first_entry=True,
-                             mandatory_all_entrys=False):
-    first_entry = True
-    num = min(len(list_of_types), len(list_of_prompts))
-    data = [None] * num
-    for i in range(num):
-        current_prompt = Text(list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT)
-        while True:
-            user_data = ""
-            try:
-                user_data = CLI.input(current_prompt)
-                user_data = user_data.strip()
-                if len(user_data) == 0 and (not mandatory_all_entrys):
-                    if not (first_entry and mandatory_first_entry):
-                        break
-                if first_entry:
-                    good_data = list_of_types[i](user_data)
-                    if assert_validator:
-                        assert_validator(good_data.value)
-                data[i] = list_of_types[i](user_data)
-                first_entry = False
-                break
-            except KeyboardInterrupt:
-                CLI.print()
-                return data
-            except ErrorWithMsg as er:
-                if first_entry and len(user_data) == 0:
-                    CLI.print("Mandatory field cannot be empty", style=CLI.MSG_STYLE_ERROR, highlight=False)
-                else:
-                    CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)
-    return data
-
-
 class ErrorWithMsg(Exception):
     pass
 
@@ -106,6 +70,42 @@ class CmdProvider(ABC):
         raise ErrorWithMsg("Unknown help()")
         return []
         # return _Your_class_name_.__cmds_example
+
+
+def get_extra_data_from_user(list_of_types,
+                             list_of_prompts,
+                             assert_validator=None,
+                             mandatory_first_entry=True,
+                             mandatory_all_entries=False):
+    first_entry = True
+    num = min(len(list_of_types), len(list_of_prompts))
+    data = [None] * num
+    for i in range(num):
+        current_prompt = Text(list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT)
+        while True:
+            user_data = ""
+            try:
+                user_data = CLI.input(current_prompt)
+                user_data = user_data.strip()
+                if len(user_data) == 0 and (not mandatory_all_entries):
+                    if not (first_entry and mandatory_first_entry):
+                        break
+                if first_entry:
+                    good_data = list_of_types[i](user_data)
+                    if assert_validator:
+                        assert_validator(good_data.value)
+                data[i] = list_of_types[i](user_data)
+                first_entry = False
+                break
+            except KeyboardInterrupt:
+                CLI.print()
+                return data
+            except ErrorWithMsg as er:
+                if first_entry and len(user_data) == 0:
+                    CLI.print("Mandatory field cannot be empty", style=CLI.MSG_STYLE_ERROR, highlight=False)
+                else:
+                    CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)
+    return data
 
 
 def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=False, debug=False, today=None):
