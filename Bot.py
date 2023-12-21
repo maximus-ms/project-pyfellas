@@ -1,13 +1,29 @@
 from collections import defaultdict, OrderedDict
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import Completer, Completion
+from rich.console import Text
+
 from BaseClasses import *
 from Book import Book
 
-from rich.console import Text
+class WordCompleter(Completer):
+    def __init__(self, word_list):
+        self.word_list = word_list
+
+    def get_completions(self, document, complete_event):
+        word_before_cursor = document.get_word_before_cursor()
+        completions = []
+        for word in self.word_list:
+            if word.startswith(word_before_cursor):
+                completions.append(Completion(word, start_position=-len(word_before_cursor)))
+                # Limit the number of suggestions
+        return completions
 
 
 class Bot(CmdProvider):
     HELLO_MSG = "Hi, this is your assistant"
     HELLO_HELP_MSG = "  ('h|help' for detailed information)"
+    BYE_MSG = "Bye!"
     PROMPT_MSG = ">>> "
     INVALID_CMD_MSG = "Invalid command!"
     HELP_MESSAGE_HEAD = "\n List of supported commands:"
@@ -39,6 +55,8 @@ class Bot(CmdProvider):
             self,
         ]
         self.__update_exes_dict()
+        all_cmds = sorted(list(self.__get_cmds_list()))
+        self.cmd_completer = WordCompleter(all_cmds)
 
     def __add_exes(self, cmds_help, exe_handler):
         for cmd_help in cmds_help:
@@ -51,6 +69,9 @@ class Bot(CmdProvider):
         self.exes = defaultdict(lambda: [self.__unknown_cmd, "", ""])
         for cmds_provider in self.__list_of_cmds_providers:
             self.__add_exes(cmds_provider.help(), cmds_provider.exe)
+
+    def __get_cmds_list(self):
+        return self.exes.keys()
 
     def help(self):
         return Bot.__cmds_help
@@ -83,7 +104,7 @@ class Bot(CmdProvider):
 
     def exit(self, args):
         self.__finish = True
-        return "Bye!"
+        return Bot.BYE_MSG
 
     def get_help_message(self, args):
         help_dict = OrderedDict()
@@ -113,12 +134,21 @@ class Bot(CmdProvider):
         # except Exception as e:
         #     return str(e)
 
-    def get_input(self, message):
+    def cmd_input(self, msg, style=CLI.MSG_STYLE_DEFAULT, use_prompt=True):
+        if use_prompt:
+            user_input = prompt(msg, completer=self.cmd_completer, reserve_space_for_menu=5)
+        else:
+            formatted_msg = Text(msg, style=style)
+            user_input = CLI.input(formatted_msg)
+        return user_input
+
+    def get_input(self, message, style=CLI.MSG_STYLE_DEFAULT):
         try:
-            user_input = CLI.input(message)
+            user_input = self.cmd_input(message, style)
             cmd, *args = user_input.split()
             ret = cmd.strip().lower(), args
-        except:
+        except Exception as e:
+            # print(e)
             self.__is_error = True
             ret = "__unknown_cmd", (None,)
         return ret
@@ -155,17 +185,23 @@ class Bot(CmdProvider):
     def run(self):
         CLI.print(Bot.HELLO_MSG, style=CLI.MSG_STYLE_WELCOME, highlight=False)
         CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
-        # try:
-        if 1:
-            bot_prompt_text = Text(Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT)
+        try:
             while not self.__finish:
-                self.__is_error = False
-                cmd, args = self.get_input(bot_prompt_text)
-                res = self.exe_cmd(cmd, args)
-                if self.__is_error:
-                    style = CLI.MSG_STYLE_ERROR
-                else:
-                    style = CLI.MSG_STYLE_OK
-                Bot.print_all(res, style=style)
-            # except:
+                try:
+                    self.__is_error = False
+                    cmd, args = self.get_input(Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT)
+                    res = self.exe_cmd(cmd, args)
+                    if self.__is_error:
+                        style = CLI.MSG_STYLE_ERROR
+                    else:
+                        style = CLI.MSG_STYLE_OK
+                    Bot.print_all(res, style=style)
+                except KeyboardInterrupt:
+                    Bot.print_all(Bot.BYE_MSG, style=CLI.MSG_STYLE_OK)
+                    self.__finish = True
+        except Exception as e:
+            #TODO delete this print
+            print(e)
+            pass
+
             self.book.save_to_file()
