@@ -38,10 +38,12 @@ class Settings:
         self.data = {}
         self.order = []
         self.config = {}
-        self.add_setting("Name", Name, None, Name())
+        self.add_setting("Name", Name, None, "")
         self.add_setting("Show birthdays", YesNo, None, True)
         self.add_setting("Show reminders", YesNo, None, True)
         self.add_setting("Show quote", YesNo, None, True)
+        self.add_setting("Color theme", Number, CLI.color_scheme_ix_valid, CLI.curr_color_scheme)
+        self.add_setting("Use prompt", YesNo, None, True)
 
     def add_setting(self, name, _type, checker=None, default=None):
         self.data[name] = default
@@ -72,6 +74,7 @@ class Bot(CmdProvider):
 
     def __init__(self, filename: str):
         self.name = ""
+        self.use_prompt = True
         self.book = Book()
         self.settings = Settings()
         self.filename = Path(__file__).parent / filename
@@ -140,6 +143,10 @@ class Bot(CmdProvider):
             Notes.WELCOME_REMINDERS_NUM_OF_DAYS = 0
         if not self.settings.data["Show quote"] is None:
             Bot.SHOW_WELCOME_QUOTE = self.settings.data["Show quote"]
+        if not self.settings.data["Color theme"] is None:
+            CLI.apply_color_scheme(self.settings.data["Color theme"])
+        if not self.settings.data["Use prompt"] is None:
+            self.use_prompt = self.settings.data["Use prompt"]
 
     def configure_assistant_by_user(self, args):
         if len(args) > 0:
@@ -150,7 +157,8 @@ class Bot(CmdProvider):
         for item in self.settings.order:
             list_of_types.append(self.settings.config[item].type)
             if item == "Name":
-                list_of_prompts.append(f"{item} /'~' to delete/ (current {self.settings.data[item]}) : ")
+                curr = f" (current {self.settings.data[item]})" if self.settings.data[item] else ""
+                list_of_prompts.append(f"{item} /'~' to delete/{curr} : ")
             else:
                 list_of_prompts.append(f"{item} (current {self.settings.data[item]}): ")
             list_of_asserts.append(self.settings.config[item].checker)
@@ -246,10 +254,10 @@ class Bot(CmdProvider):
         # except Exception as e:
         #     return str(e)
 
-    def cmd_input(self, msg, style=CLI.MSG_STYLE_DEFAULT, use_prompt=True):
+    def cmd_input(self, msg, style=CLI.MSG_STYLE_DEFAULT):
         if 'Darwin' == platform.system():
-            use_prompt = False
-        if use_prompt:
+            self.use_prompt = False
+        if self.use_prompt:
             user_input = prompt(msg, completer=self.cmd_completer, reserve_space_for_menu=5)
         else:
             formatted_msg = Text(msg, style=style)

@@ -6,6 +6,11 @@ from rich.console import Console, Text
 
 
 class CLI:
+    COLOR_SCHEME = (
+        (None,None,None,None,None,None),
+        (None,"green","magenta","green","red","grey0"),
+    )
+    curr_color_scheme = 1
     MSG_STYLE_DEFAULT = None
     MSG_STYLE_WELCOME = "green"
     MSG_STYLE_PROMPT = "magenta"
@@ -16,6 +21,20 @@ class CLI:
     print = console.print
     input = console.input
 
+    def apply_color_scheme(ix):
+        if ix >= len(CLI.COLOR_SCHEME):
+            return
+        CLI.curr_color_scheme = ix
+        CLI.MSG_STYLE_DEFAULT = CLI.COLOR_SCHEME[ix][0]
+        CLI.MSG_STYLE_WELCOME = CLI.COLOR_SCHEME[ix][1]
+        CLI.MSG_STYLE_PROMPT  = CLI.COLOR_SCHEME[ix][2]
+        CLI.MSG_STYLE_OK      = CLI.COLOR_SCHEME[ix][3]
+        CLI.MSG_STYLE_ERROR   = CLI.COLOR_SCHEME[ix][4]
+        CLI.MSG_STYLE_HINT    = CLI.COLOR_SCHEME[ix][5]
+
+    def color_scheme_ix_valid(ix):
+        if ix >= len(CLI.COLOR_SCHEME):
+            raise ErrorWithMsg("Color theme should be in a range [0..1]")
 
 class ErrorWithMsg(Exception):
     pass
