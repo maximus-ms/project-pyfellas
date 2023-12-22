@@ -74,7 +74,7 @@ class Note:
             note_text += f", text tags: {', '.join(self.text_tags)}"
         if self.user_tags:
             note_text += f", user tags: {', '.join(self.user_tags)}"
-        if self.user_tags:
+        if self.reminder:
             note_text += f", reminder: {self.reminder}"
         return note_text
 
