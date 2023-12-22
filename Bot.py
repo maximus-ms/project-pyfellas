@@ -2,6 +2,7 @@ from collections import defaultdict, OrderedDict
 import platform
 import os
 import pickle
+import requests
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import Completer, Completion
@@ -76,6 +77,7 @@ class Bot(CmdProvider):
     SAVE_PATTERNS = ("add", "edit", "delete", "rename", "settings")
 
     __cmds_help = (
+        ("quote", "quote", "Show random quote from https://zenquotes.io/"),
         ("help", "h|help", "Show this message"),
         ("h", "h|help", "Show this message"),
         ("settings", "settings", "Configure assistant"),
@@ -95,6 +97,7 @@ class Bot(CmdProvider):
         self.__finish = False
         self.__is_error = False
         self.cmds = {
+            "quote": self.show_quote,
             "help": self.get_help_message,
             "h": self.get_help_message,
             "settings": self.configure_assistant_by_user,
@@ -209,19 +212,25 @@ class Bot(CmdProvider):
     def exe(self, cmd, args):
         return self.cmds[cmd](args)
 
+    def get_quote(self):
+        response = requests.get("https://zenquotes.io/api/random").json()
+        q = response[0]["q"]
+        a = response[0]["a"]
+        random_quote = (
+            f'"{q}" - {a} (https://zenquotes.io/)'
+        )
+        return random_quote
+
     def welcome_message(self):
         if Bot.SHOW_WELCOME_QUOTE:
-            import requests
-
-            response = requests.get("https://zenquotes.io/api/random").json()
-            q = response[0]["q"]
-            a = response[0]["a"]
-            random_quote = (
-                f'Quote for today: "{q}" - {a} (https://zenquotes.io/)'
-            )
-            return random_quote
+            return f'Quote for today: {self.get_quote()}'
         else:
             return ""
+
+    def show_quote(self, args):
+        if len(args) > 0:
+            raise ValueError
+        return self.get_quote()
 
     def cmd_errors(func):
         def inner(*args, **kwargs):
