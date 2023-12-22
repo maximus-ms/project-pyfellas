@@ -18,7 +18,7 @@ class Name(Field):
 
 
 class Number(Field):
-    """Class for storing a contact's name. Mandatory field."""
+    """Class for validating number. Mandatory field."""
 
     def validate(self, number: str):
         try:
