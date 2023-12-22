@@ -80,10 +80,10 @@ class Note:
 
 
 class Notes(UserDict, CmdProvider):
-    ERROR_MESSAGE_NOTE_NOT_FOUND = "Note is not found"
     ERROR_MESSAGE_TAG_NOT_FOUND = "Tag is not found"
     ERROR_EMPTY_NOTES_LIST = "Notes list is empty. Please add some notes first"
-    ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact {} already exists"
+    ERROR_MESSAGE_TOPIC_ALREADY_EXISTS = "Topic {} already exists"
+    ERROR_MESSAGE_TOPIC_NOT_FOUND = "Topic is not found"
     WELCOME_REMINDERS_NUM_OF_DAYS = 7
     REMINDERS_NUM_OF_DAYS = 7
 
@@ -141,7 +141,12 @@ class Notes(UserDict, CmdProvider):
 
     def assert_topic_is_absent(self, topic: str) -> None:
         if topic in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(topic))
+            raise ErrorWithMsg(Notes.ERROR_MESSAGE_TOPIC_ALREADY_EXISTS.format(topic))
+        pass
+
+    def assert_topic_exist(self, topic: str) -> None:
+        if not topic in self.data:
+            raise ErrorWithMsg(Notes.ERROR_MESSAGE_TOPIC_NOT_FOUND.format(topic))
         pass
 
     def add_note(self, args):
@@ -155,36 +160,48 @@ class Notes(UserDict, CmdProvider):
         return f"Note with topic '{topic}' was added."
 
     def rename_note(self, args):
-        old_topic, new_topic = args
-        if old_topic not in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Topic, Topic]
+        list_of_prompts = ["Old topic: ", "New topic: "]
+        list_of_asserts = [self.assert_topic_exist, self.assert_topic_is_absent]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        old_topic = data[0].value
+        new_topic = data[1].value
         note = self.data.pop(old_topic)
-        self.data[new_topic] = Note(new_topic, note.text.value, note.user_tags)
+        note.topic = new_topic
+        self.data[new_topic] = note
         return f"Note with topic '{old_topic}' has been renamed to '{new_topic}'."
 
     def edit_note(self, args):
         if len(args) < 1:
             raise ValueError
-        topic = args[0]
-        new_text = ' '.join(args[1:])
-        if topic not in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
+        list_of_types = [Topic, Text]
+        list_of_prompts = ["Topic: ", "New text: "]
+        list_of_asserts = [self.assert_topic_exist]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        topic = data[0].value
+        new_text = data[1].value
         note = self.data.get(topic)
         note.text.value = new_text
         note.text_tags = Note.extract_hashtags(new_text)
         return f"Text of the note '{topic}' was changed, and text tags were updated."
 
     def delete_note(self, args):
-        topic, = args
-        if topic not in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Topic]
+        list_of_prompts = ["Topic: "]
+        list_of_asserts = [self.assert_topic_exist]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        topic = data[0].value
         self.data.pop(topic)
         return f"Note with topic '{topic}' was removed."
 
     def add_tag(self, args):
         topic, *tags = args
         if topic not in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
+            raise ErrorWithMsg(Notes.ERROR_MESSAGE_TOPIC_NOT_FOUND)
         note = self.data[topic]
         cleaned_tags = [tag[1:] if tag.startswith('#') else tag for tag in tags]
         note.user_tags.extend(cleaned_tags)
@@ -193,7 +210,7 @@ class Notes(UserDict, CmdProvider):
     def delete_tag(self, args):
         topic, *tags = args
         if topic not in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
+            raise ErrorWithMsg(Notes.ERROR_MESSAGE_TOPIC_NOT_FOUND)
         note = self.data[topic]
         for tag in tags:
             if tag in note.text_tags:
@@ -205,9 +222,13 @@ class Notes(UserDict, CmdProvider):
         return f"Tag(s) {', '.join(tags)} removed from the note with topic '{topic}'."
 
     def find_note_by_topic(self, args):
-        topic, = args
-        if topic not in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_NOTE_NOT_FOUND)
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Topic]
+        list_of_prompts = ["Topic: "]
+        list_of_asserts = [self.assert_topic_exist]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        topic = data[0].value
         return str(self.data.get(topic))
 
     def mixed_search_notes_by_tags(self, search_tags):
