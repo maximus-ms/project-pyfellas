@@ -42,7 +42,7 @@ Extra features
     * Show reminder message
     * Show quote
     * Set color theme
-    * Enable prompt while interring command
+    * Enable prompts for command
 ```
 ~$ assistant
 Hi, this is your assistant
