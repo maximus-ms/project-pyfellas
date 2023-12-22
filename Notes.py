@@ -1,7 +1,9 @@
 import re
 from collections import UserDict
+from datetime import datetime
 
-from BaseClasses import CmdProvider, ErrorWithMsg, Field, get_extra_data_from_user
+from BaseClasses import CmdProvider, ErrorWithMsg, Field, get_extra_data_from_user, get_entries_for_next_x_days
+from Contacts import Number
 
 
 class Topic(Field):
@@ -31,19 +33,38 @@ class Tags(Field):
         return tags_list
 
 
+class Reminder(Field):
+    """Class for storing a reminder. Validates the format (expecting DD.MM.YYYY)."""
+
+    def validate(self, reminder: str):
+        reminder = reminder.strip()
+        try:
+            datetime.strptime(reminder, "%d.%m.%Y")
+        except:
+            raise ErrorWithMsg("Invalid birthday format (DD.MM.YYYY)")
+        return reminder
+
+
 class Note:
 
-    def __init__(self, topic: Topic, text: Text, tags: Tags):
+    def __init__(self, topic: Topic, text: Text, tags: Tags, reminder: Reminder):
         self.topic = topic
         self.text = text
-        self.text_tags = self.extract_hashtags(text.value)
-        self.user_tags = tags.value or []
+        self.text_tags = self.extract_hashtags(text.value) if text else []
+        self.user_tags = tags.value if tags else []
+        self.reminder = reminder
 
     @staticmethod
     def extract_hashtags(text: str):
         hashtags = re.findall(r'#\w+', text)
         hashtag_words = [hashtag[1:] for hashtag in hashtags]
         return hashtag_words
+
+    def get_reminder_string(self):
+        reminder_text = f"Topic: {self.topic}"
+        if self.text and self.text.value:
+            reminder_text += f", text: {self.text}"
+        return reminder_text
 
     def __str__(self):
         note_text = f"Topic: {self.topic}"
@@ -53,6 +74,8 @@ class Note:
             note_text += f", text tags: {', '.join(self.text_tags)}"
         if self.user_tags:
             note_text += f", user tags: {', '.join(self.user_tags)}"
+        if self.reminder:
+            note_text += f", reminder: {self.reminder}"
         return note_text
 
 
@@ -61,6 +84,8 @@ class Notes(UserDict, CmdProvider):
     ERROR_MESSAGE_TAG_NOT_FOUND = "Tag is not found"
     ERROR_EMPTY_NOTES_LIST = "Notes list is empty. Please add some notes first"
     ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact {} already exists"
+    WELCOME_REMINDERS_NUM_OF_DAYS = 7
+    REMINDERS_NUM_OF_DAYS = 7
 
     cmds_help = (
         ("add-note", "add-note", "Add a note to notebook"),
@@ -72,6 +97,7 @@ class Notes(UserDict, CmdProvider):
         ("find-note", "find-note <Topic>", "Find note in notebook by its topic"),
         ("find-by-tag", "find-by-tag <Tag>", "Find note in notebook by its tag"),
         ("all-notes", "all-notes", "Show the complete list of notes"),
+        ("reminders", "reminders", "Show reminders for next X days"),
     )
 
     def __init__(self) -> None:
@@ -86,9 +112,21 @@ class Notes(UserDict, CmdProvider):
         self.cmds["find-note"] = self.find_note_by_topic
         self.cmds["find-by-tag"] = self.mixed_search_notes_by_tags
         self.cmds["all-notes"] = self.show_all_notes
+        self.cmds["reminders"] = self.reminders
 
     def __str__(self):
         return "\n".join(self.get_str_list_of_notes())
+
+    def welcome_message(self):
+        notes_reminder = self.__reminders(Notes.WELCOME_REMINDERS_NUM_OF_DAYS)
+        num = 0
+        for note in notes_reminder:
+            if "Topic" in note:
+                num += 1
+        if num > 0:
+            return f"You have {num} reminders(s) during next {Notes.WELCOME_REMINDERS_NUM_OF_DAYS} day(s)"
+        else:
+            return ""
 
     def get_str_list_of_notes(self):
         if len(self.data) == 0:
@@ -109,11 +147,11 @@ class Notes(UserDict, CmdProvider):
     def add_note(self, args):
         if len(args) > 0:
             raise ValueError
-        list_of_types = [Topic, Text, Tags]
-        list_of_prompts = ["Topic: ", "Text: ", "Tags: "]
+        list_of_types = [Topic, Text, Tags, Reminder]
+        list_of_prompts = ["Topic: ", "Text: ", "Tags: ", "Reminder: "]
         data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_is_absent)
         topic = data[0].value
-        self.data[topic] = Note(data[0], data[1], data[2])
+        self.data[topic] = Note(data[0], data[1], data[2], data[3])
         return f"Note with topic '{topic}' was added."
 
     def rename_note(self, args):
@@ -134,7 +172,7 @@ class Notes(UserDict, CmdProvider):
         note = self.data.get(topic)
         note.text.value = new_text
         note.text_tags = Note.extract_hashtags(new_text)
-        return f"Text of the note {topic} was changed, and text tags were updated."
+        return f"Text of the note '{topic}' was changed, and text tags were updated."
 
     def delete_note(self, args):
         topic, = args
@@ -198,3 +236,35 @@ class Notes(UserDict, CmdProvider):
         if len(args) > 0:
             raise ValueError
         return self.get_str_list_of_notes()
+
+    def repack_reminders_for_search(self):
+        reminders_list = []
+        for note in self.data.values():
+            if note.reminder:
+                entry = {
+                    "text": note.get_reminder_string(),
+                    "event": datetime.strptime(note.reminder.value, "%d.%m.%Y"),
+                }
+                reminders_list.append(entry)
+        return reminders_list
+
+    def __reminders(self, num_of_days):
+        res_reminders_list = []
+        if num_of_days > 0:
+            reminders_list = self.repack_reminders_for_search()
+            res_reminders_list = get_entries_for_next_x_days(reminders_list, num_of_days)
+        return res_reminders_list
+
+    def reminders(self, args):
+        num_of_days = Notes.REMINDERS_NUM_OF_DAYS
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Number]
+        list_of_prompts = [f"Days (default {num_of_days}): "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, mandatory_first_entry=False)
+        if not data[0] is None:
+            num_of_days = data[0].value
+        res_reminders_list = self.__reminders(num_of_days)
+        if len(res_reminders_list) == 0:
+            return f"No reminders for next {num_of_days} days"
+        return res_reminders_list

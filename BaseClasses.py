@@ -74,6 +74,7 @@ class CmdProvider(ABC):
     def welcome_message(self):
         return None
 
+
 def get_extra_data_from_user(list_of_types,
                              list_of_prompts,
                              assert_validator=None,
@@ -124,9 +125,9 @@ def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=Fa
     for entry in entries:
         event = entry["event"].date()
         if (
-            not isleap(today.year)
-            and event.month == 2
-            and event.day == 29
+                not isleap(today.year)
+                and event.month == 2
+                and event.day == 29
         ):
             if not isleap(event.year):
                 # looks like an error
@@ -188,7 +189,7 @@ def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=Fa
         if x_days <= 7:
             date_text = day_name[day_index]
         else:
-            #TODO day_index - it is Monday, Tuesday,... but not days from today. Need to Fix
+            # TODO day_index - it is Monday, Tuesday,... but not days from today. Need to Fix
             date_text = (today + timedelta(days=day_index)).strftime("%d.%m.%Y")
         if len(days[day_index]) > 0:
             if output_single_line_per_day:
