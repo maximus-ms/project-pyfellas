@@ -142,7 +142,7 @@ class Contacts(UserDict, CmdProvider):
     def __init__(self) -> None:
         super().__init__()
         self.cmds = {}
-        self.cmds["add-contact"] = self.add_contact
+        self.cmds["add_contact"] = self.add_contact
         self.cmds["rename-contact"] = self.rename_contact
         self.cmds["delete-contact"] = self.delete_contact
         self.cmds["add-phone"] = self.add_phone
@@ -161,7 +161,7 @@ class Contacts(UserDict, CmdProvider):
         self.cmds["find-phone"] = self.find_phone
         self.cmds["find-email"] = self.find_email
         self.cmds["find-birthday"] = self.find_birthday
-        self.cmds["find-address"] = self.address
+        self.cmds["find-address"] = self.find_address
         self.cmds["birthdays"] = self.birthdays
         self.cmds["all-contacts"] = self.all_contacts
 
@@ -378,9 +378,17 @@ class Contacts(UserDict, CmdProvider):
             raise ErrorWithMsg("Birthday date not found.")
         return contact_list
 
-    def address(self, args):
-        # TODO
-        return "TODO address"
+    def find_address(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Address]
+        list_of_prompts = ["Address: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts)
+        address = data[0]
+        contact_list = [str(c) for c in self.data.values() if c.address == address]
+        if len(contact_list) == 0:
+            raise ErrorWithMsg("Address date not found.")
+        return contact_list
 
     def all_contacts(self, args):
         return self.get_str_list_of_contacts()
@@ -416,3 +424,4 @@ class Contacts(UserDict, CmdProvider):
         if len(res_birthday_list) == 0:
             return f"No birthdays for next {num_of_days} days"
         return res_birthday_list
+
