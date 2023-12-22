@@ -16,7 +16,10 @@ class Name(Field):
             return name
         raise ErrorWithMsg("Name must be a string")
 
-
+    def __len__(self):
+        if self.value is None:
+            return 0
+        return len(self.value)
 class YesNo(Field):
     """Class for validating number. Mandatory field."""
 

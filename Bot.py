@@ -36,17 +36,17 @@ class SettingsItem:
 class Settings:
     def __init__(self) -> None:
         self.data = {}
-        self.__order = []
-        self.__config = {}
-        self.add_setting("Name", Name, None, "")
+        self.order = []
+        self.config = {}
+        self.add_setting("Name", Name, None, Name())
         self.add_setting("Show birthdays", YesNo, None, True)
         self.add_setting("Show reminders", YesNo, None, True)
         self.add_setting("Show quote", YesNo, None, True)
 
     def add_setting(self, name, _type, checker=None, default=None):
         self.data[name] = default
-        self.__config[name] = SettingsItem(name, _type, checker, default)
-        self.__order.append(name)
+        self.config[name] = SettingsItem(name, _type, checker, default)
+        self.order.append(name)
 
 class Bot(CmdProvider):
     HELLO_MSG = "Hi{}, this is your assistant"
@@ -62,11 +62,12 @@ class Bot(CmdProvider):
     SAVE_PATTERNS = ("add", "edit", "delete", "rename", "settings")
 
     __cmds_help = (
-        ("help", "h|help", "Show this message."),
-        ("h", "h|help", "Show this message."),
-        ("exit", "q|exit|close", "Finish to work with an assistant."),
-        ("close", "q|exit|close", "Finish to work with an assistant."),
-        ("q", "q|exit|close", "Finish to work with an assistant."),
+        ("help", "h|help", "Show this message"),
+        ("h", "h|help", "Show this message"),
+        ("settings", "settings", "Configure assistant"),
+        ("exit", "q|exit|close", "Finish to work with an assistant"),
+        ("close", "q|exit|close", "Finish to work with an assistant"),
+        ("q", "q|exit|close", "Finish to work with an assistant"),
     )
 
     def __init__(self, filename: str):
@@ -81,6 +82,7 @@ class Bot(CmdProvider):
         self.cmds = {
             "help": self.get_help_message,
             "h": self.get_help_message,
+            "settings": self.configure_assistant_by_user,
             "exit": self.exit,
             "close": self.exit,
             "q": self.exit,
@@ -128,14 +130,48 @@ class Bot(CmdProvider):
             pickle.dump(data, f)
 
     def apply_setting(self):
-        self.name = self.settings.data["Name"]
-        if len(self.name) > 0:
-            self.name = " " + self.name
+        if self.settings.data["Name"]:
+            self.name = self.settings.data["Name"]
+            if len(self.name) > 0:
+                self.name = " " + self.name
         if not self.settings.data["Show birthdays"]:
             Contacts.WELCOME_BIRTHDAYS_NUM_OF_DAYS = 0
         if not self.settings.data["Show reminders"]:
             Notes.WELCOME_REMINDERS_NUM_OF_DAYS = 0
-        Bot.SHOW_WELCOME_QUOTE = self.settings.data["Show quote"]
+        if not self.settings.data["Show quote"] is None:
+            Bot.SHOW_WELCOME_QUOTE = self.settings.data["Show quote"]
+
+    def configure_assistant_by_user(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = []
+        list_of_prompts = []
+        list_of_asserts = []
+        for item in self.settings.order:
+            list_of_types.append(self.settings.config[item].type)
+            if item == "Name":
+                list_of_prompts.append(f"{item} /'~' to delete/ (current {self.settings.data[item]}) : ")
+            else:
+                list_of_prompts.append(f"{item} (current {self.settings.data[item]}): ")
+            list_of_asserts.append(self.settings.config[item].checker)
+        data = get_extra_data_from_user(
+                            list_of_types,
+                            list_of_prompts,
+                            list_of_asserts,
+                            mandatory_first_entry=False
+                        )
+        cnt = 0
+        for i, item in enumerate(self.settings.order):
+            if data[i] is None:
+                continue
+            self.settings.data[item] = data[i].value
+            cnt += 1
+        if cnt == 0:
+            raise ErrorWithMsg("No settings to apply")
+        if self.settings.data["Name"] == "~":
+            self.settings.data["Name"] = ""
+        self.apply_setting()
+        return "New settings applied"
 
     def help(self):
         return Bot.__cmds_help
