@@ -55,6 +55,8 @@ class Bot(CmdProvider):
     PARSING_ERROR_MSG_CMDS_FORMAT = "{}\nExpected format: {}"
     SHOW_WELCOME_QUOTE = True
 
+    SAVE_PATTERNS = ("add", "edit", "delete", "rename", "settings")
+
     __cmds_help = (
         ("help", "h|help", "Show this message."),
         ("h", "h|help", "Show this message."),
@@ -239,6 +241,12 @@ class Bot(CmdProvider):
             CLI.print()
             pass
 
+    def save_if_cmd(self, cmd):
+        for p in Bot.SAVE_PATTERNS:
+            if p in cmd:
+                self.save_to_file()
+                return
+
     def run(self):
         CLI.print(Bot.HELLO_MSG, style=CLI.MSG_STYLE_WELCOME, highlight=False)
         for member in self.__list_of_cmds_providers:
@@ -263,6 +271,7 @@ class Bot(CmdProvider):
                         else:
                             style = CLI.MSG_STYLE_OK
                         Bot.print_all(res, style=style)
+                        self.save_if_cmd(cmd)
                 except KeyboardInterrupt:
                     Bot.print_all(Bot.BYE_MSG, style=CLI.MSG_STYLE_OK)
                     self.__finish = True
