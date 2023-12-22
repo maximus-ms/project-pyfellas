@@ -94,11 +94,14 @@ class Notes(UserDict, CmdProvider):
         ("delete-note", "delete-note", "Delete a note from notebook"),
         ("add-tag", "add-tag", "Add one or more tags to note"),
         ("delete-tag", "delete-tag", "Delete one or more tags from note"),
+        ("add-reminder", "add-reminder", "Add reminder for note"),
+        ("edit-reminder", "edit-reminder", "Edit reminder for note"),
+        ("delete-reminder", "delete-reminder", "Delete reminder for note"),
         ("find-note", "find-note", "Find note in notebook by its topic"),
-        ("find-by-tag", "find-by-tag <Tag>", "Find note in notebook by its tag"),
+        ("find-tag", "find-tag", "Find note in notebook by its tag"),
         ("all-notes", "all-notes", "Show the complete list of notes"),
         ("reminders", "reminders", "Show reminders for next X days"),
-        ("find-note-by-reminder", "find-note-by-reminder", "Find notes appropriate to reminder date"),
+        ("find-reminder", "find-reminder", "Find notes appropriate to reminder date"),
     )
 
     def __init__(self) -> None:
@@ -111,11 +114,14 @@ class Notes(UserDict, CmdProvider):
         self.cmds["delete-note"] = self.delete_note
         self.cmds["add-tag"] = self.add_tag
         self.cmds["delete-tag"] = self.delete_tag
+        self.cmds["add-reminder"] = self.add_reminder
+        self.cmds["edit-reminder"] = self.edit_reminder
+        self.cmds["delete-reminder"] = self.delete_reminder
         self.cmds["find-note"] = self.find_note_by_topic
-        self.cmds["find-note-by-tag"] = self.mixed_search_notes_by_tags
+        self.cmds["find-tag"] = self.mixed_search_notes_by_tags
         self.cmds["all-notes"] = self.show_all_notes
         self.cmds["reminders"] = self.reminders
-        self.cmds["find-note-by-reminder"] = self.find_note_by_reminder
+        self.cmds["find-reminder"] = self.find_note_by_reminder
 
     def __str__(self):
         return "\n".join(self.get_str_list_of_notes())
@@ -276,6 +282,30 @@ class Notes(UserDict, CmdProvider):
         # Extract sorted notes without relevance
         sorted_notes = [note[0] for note in relevant_notes]
         return [str(note) for note in sorted_notes]
+
+    def add_reminder(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Topic, Reminder]
+        list_of_prompts = ["Topic: ", "Reminder: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_exist,
+                                        mandatory_all_entries=True)
+        topic = data[0].value
+        self.data[topic].reminder = data[1]
+        return f"Reminder for '{topic}' was set"
+
+    def edit_reminder(self, args):
+        return self.add_reminder(args)
+
+    def delete_reminder(self, args):
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Topic]
+        list_of_prompts = ["Topic: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_exist)
+        topic = data[0].value
+        self.data[topic].reminder = None
+        return f"Reminder for '{topic}' was deleted"
 
     def show_all_notes(self, args):
         if len(args) > 0:
