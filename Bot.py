@@ -35,17 +35,21 @@ class SettingsItem:
 
 class Settings:
     def __init__(self) -> None:
-        self.data = []
-        self.add_setting("Name", Name, None, None)
+        self.data = {}
+        self.__order = []
+        self.__config = {}
+        self.add_setting("Name", Name, None, "")
         self.add_setting("Show birthdays", YesNo, None, True)
         self.add_setting("Show reminders", YesNo, None, True)
         self.add_setting("Show quote", YesNo, None, True)
 
     def add_setting(self, name, _type, checker=None, default=None):
-        self.data.append({name: SettingsItem(name, _type, checker, default)})
+        self.data[name] = default
+        self.__config[name] = SettingsItem(name, _type, checker, default)
+        self.__order.append(name)
 
 class Bot(CmdProvider):
-    HELLO_MSG = "Hi, this is your assistant"
+    HELLO_MSG = "Hi{}, this is your assistant"
     HELLO_HELP_MSG = "write your command ('h|help' for details)"
     BYE_MSG = "Bye!"
     PROMPT_MSG = ">>> "
@@ -66,10 +70,12 @@ class Bot(CmdProvider):
     )
 
     def __init__(self, filename: str):
+        self.name = ""
         self.book = Book()
         self.settings = Settings()
         self.filename = Path(__file__).parent / filename
         self.load_from_file()
+        self.apply_setting()
         self.__finish = False
         self.__is_error = False
         self.cmds = {
@@ -120,6 +126,16 @@ class Bot(CmdProvider):
         data = {"contacts": self.book.contacts.data, "notes": self.book.notes.data, "settings":self.settings.data }
         with open(self.filename, "wb") as f:
             pickle.dump(data, f)
+
+    def apply_setting(self):
+        self.name = self.settings.data["Name"]
+        if len(self.name) > 0:
+            self.name = " " + self.name
+        if not self.settings.data["Show birthdays"]:
+            Contacts.WELCOME_BIRTHDAYS_NUM_OF_DAYS = 0
+        if not self.settings.data["Show reminders"]:
+            Notes.WELCOME_REMINDERS_NUM_OF_DAYS = 0
+        Bot.SHOW_WELCOME_QUOTE = self.settings.data["Show quote"]
 
     def help(self):
         return Bot.__cmds_help
@@ -248,7 +264,7 @@ class Bot(CmdProvider):
                 return
 
     def run(self):
-        CLI.print(Bot.HELLO_MSG, style=CLI.MSG_STYLE_WELCOME, highlight=False)
+        CLI.print(Bot.HELLO_MSG.format(self.name), style=CLI.MSG_STYLE_WELCOME, highlight=False)
         for member in self.__list_of_cmds_providers:
             message = member.welcome_message()
             if message:
