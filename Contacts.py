@@ -142,7 +142,7 @@ class Contacts(UserDict, CmdProvider):
     def __init__(self) -> None:
         super().__init__()
         self.cmds = {}
-        self.cmds["add_contact"] = self.add_contact
+        self.cmds["add-contact"] = self.add_contact
         self.cmds["rename-contact"] = self.rename_contact
         self.cmds["delete-contact"] = self.delete_contact
         self.cmds["add-phone"] = self.add_phone
