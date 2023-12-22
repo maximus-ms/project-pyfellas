@@ -142,7 +142,7 @@ class Contacts(UserDict, CmdProvider):
     def __init__(self) -> None:
         super().__init__()
         self.cmds = {}
-        self.cmds["add_contact"] = self.add_contact
+        self.cmds["add-contact"] = self.add_contact
         self.cmds["rename-contact"] = self.rename_contact
         self.cmds["delete-contact"] = self.delete_contact
         self.cmds["add-phone"] = self.add_phone
@@ -387,7 +387,7 @@ class Contacts(UserDict, CmdProvider):
         address = data[0]
         contact_list = [str(c) for c in self.data.values() if c.address == address]
         if len(contact_list) == 0:
-            raise ErrorWithMsg("Address date not found.")
+            raise ErrorWithMsg("Address not found.")
         return contact_list
 
     def all_contacts(self, args):
