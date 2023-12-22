@@ -75,11 +75,13 @@ class CmdProvider(ABC):
         return None
 
 
-def get_extra_data_from_user(list_of_types,
-                             list_of_prompts,
-                             assert_validator=None,
-                             mandatory_first_entry=True,
-                             mandatory_all_entries=False):
+def get_extra_data_from_user(
+    list_of_types,
+    list_of_prompts,
+    assert_validator=None,
+    mandatory_first_entry=True,
+    mandatory_all_entries=False,
+):
     num = min(len(list_of_types), len(list_of_prompts))
     data = [None] * num
     assert_validators = [None] * num
@@ -88,7 +90,9 @@ def get_extra_data_from_user(list_of_types,
     else:
         assert_validators[0] = assert_validator
     for i in range(num):
-        is_current_entry_mandatory = mandatory_first_entry or mandatory_all_entries
+        is_current_entry_mandatory = (
+            mandatory_first_entry or mandatory_all_entries
+        )
         current_prompt = Text(list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT)
         while True:
             user_data = ""
@@ -110,13 +114,23 @@ def get_extra_data_from_user(list_of_types,
                 return data
             except ErrorWithMsg as er:
                 if len(user_data) == 0:
-                    CLI.print("This field can not be empty", style=CLI.MSG_STYLE_ERROR, highlight=False)
+                    CLI.print(
+                        "This field can not be empty",
+                        style=CLI.MSG_STYLE_ERROR,
+                        highlight=False,
+                    )
                 else:
                     CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)
     return data
 
 
-def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=False, debug=False, today=None):
+def get_entries_for_next_x_days(
+    entries,
+    x_days=7,
+    output_single_line_per_day=False,
+    debug=False,
+    today=None,
+):
     days = defaultdict(list)
     if not today:
         today = datetime.today().date()
@@ -124,11 +138,7 @@ def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=Fa
         print("Today:", today)
     for entry in entries:
         event = entry["event"].date()
-        if (
-                not isleap(today.year)
-                and event.month == 2
-                and event.day == 29
-        ):
+        if not isleap(today.year) and event.month == 2 and event.day == 29:
             if not isleap(event.year):
                 # looks like an error
                 # it is impossible to have a BD at 29-Feb in non leap year
@@ -154,9 +164,7 @@ def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=Fa
 
         if delta_days < min_delta:
             if delta_days < -(366 - x_days):
-                event_this_year = event_this_year.replace(
-                    year=today.year + 1
-                )
+                event_this_year = event_this_year.replace(year=today.year + 1)
                 delta_days = (event_this_year - today).days
             else:
                 # there is no reason to handle passed BD if today is not Dec
@@ -164,9 +172,7 @@ def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=Fa
                 continue
         elif delta_days >= 363 and is_monday:
             # if today is 1..2-Jan Monday
-            event_this_year = event_this_year.replace(
-                year=today.year - 1
-            )
+            event_this_year = event_this_year.replace(year=today.year - 1)
             delta_days = (event_this_year - today).days
 
         if min_delta <= delta_days < min_delta + x_days:
@@ -190,11 +196,15 @@ def get_entries_for_next_x_days(entries, x_days=7, output_single_line_per_day=Fa
             date_text = day_name[day_index]
         else:
             # TODO day_index - it is Monday, Tuesday,... but not days from today. Need to Fix
-            date_text = (today + timedelta(days=day_index)).strftime("%d.%m.%Y")
+            date_text = (today + timedelta(days=day_index)).strftime(
+                "%d.%m.%Y"
+            )
         if len(days[day_index]) > 0:
             if output_single_line_per_day:
                 ret_txt.append(
-                    "{}: {}".format(date_text, ", ".join(sorted(days[day_index])))
+                    "{}: {}".format(
+                        date_text, ", ".join(sorted(days[day_index]))
+                    )
                 )
             else:
                 ret_txt.append(date_text)

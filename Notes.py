@@ -2,7 +2,13 @@ import re
 from collections import UserDict
 from datetime import datetime
 
-from BaseClasses import CmdProvider, ErrorWithMsg, Field, get_extra_data_from_user, get_entries_for_next_x_days
+from BaseClasses import (
+    CmdProvider,
+    ErrorWithMsg,
+    Field,
+    get_extra_data_from_user,
+    get_entries_for_next_x_days,
+)
 from Contacts import Number
 
 
@@ -25,7 +31,6 @@ class Text(Field):
 
 
 class Tags(Field):
-
     def validate(self, tags: str) -> [str]:
         if not isinstance(tags, str):
             raise ErrorWithMsg("Tags must be a string.")
@@ -46,8 +51,9 @@ class Reminder(Field):
 
 
 class Note:
-
-    def __init__(self, topic: Topic, text: Text, tags: Tags, reminder: Reminder):
+    def __init__(
+        self, topic: Topic, text: Text, tags: Tags, reminder: Reminder
+    ):
         self.topic = topic
         self.text = text
         self.text_tags = self.extract_hashtags(text.value) if text else []
@@ -56,7 +62,7 @@ class Note:
 
     @staticmethod
     def extract_hashtags(text: str):
-        hashtags = re.findall(r'#\w+', text)
+        hashtags = re.findall(r"#\w+", text)
         hashtag_words = [hashtag[1:] for hashtag in hashtags]
         return hashtag_words
 
@@ -101,7 +107,11 @@ class Notes(UserDict, CmdProvider):
         ("find-tag", "find-tag", "Find note in notebook by its tag"),
         ("all-notes", "all-notes", "Show the complete list of notes"),
         ("reminders", "reminders", "Show reminders for next X days"),
-        ("find-reminder", "find-reminder", "Find notes appropriate to reminder date"),
+        (
+            "find-reminder",
+            "find-reminder",
+            "Find notes appropriate to reminder date",
+        ),
     )
 
     def __init__(self) -> None:
@@ -150,12 +160,16 @@ class Notes(UserDict, CmdProvider):
 
     def assert_topic_is_absent(self, topic: str) -> None:
         if topic in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_TOPIC_ALREADY_EXISTS.format(topic))
+            raise ErrorWithMsg(
+                Notes.ERROR_MESSAGE_TOPIC_ALREADY_EXISTS.format(topic)
+            )
         pass
 
     def assert_topic_exist(self, topic: str) -> None:
         if not topic in self.data:
-            raise ErrorWithMsg(Notes.ERROR_MESSAGE_TOPIC_NOT_FOUND.format(topic))
+            raise ErrorWithMsg(
+                Notes.ERROR_MESSAGE_TOPIC_NOT_FOUND.format(topic)
+            )
         self.__current_topic = topic
 
     def assert_tag_exist_and_remove(self, tags: [str]) -> None:
@@ -175,7 +189,9 @@ class Notes(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Topic, Text, Tags, Reminder]
         list_of_prompts = ["Topic: ", "Text: ", "Tags: ", "Reminder: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_is_absent)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_topic_is_absent
+        )
         topic = data[0].value
         self.data[topic] = Note(data[0], data[1], data[2], data[3])
         return f"Note with topic '{topic}' was added."
@@ -185,14 +201,24 @@ class Notes(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Topic, Topic]
         list_of_prompts = ["Old topic: ", "New topic: "]
-        list_of_asserts = [self.assert_topic_exist, self.assert_topic_is_absent]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        list_of_asserts = [
+            self.assert_topic_exist,
+            self.assert_topic_is_absent,
+        ]
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         old_topic = data[0].value
         new_topic = data[1].value
         note = self.data.pop(old_topic)
         note.topic = new_topic
         self.data[new_topic] = note
-        return f"Note with topic '{old_topic}' has been renamed to '{new_topic}'."
+        return (
+            f"Note with topic '{old_topic}' has been renamed to '{new_topic}'."
+        )
 
     def edit_note(self, args):
         if len(args) > 0:
@@ -200,7 +226,12 @@ class Notes(UserDict, CmdProvider):
         list_of_types = [Topic, Text]
         list_of_prompts = ["Topic: ", "New text: "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         topic = data[0].value
         new_text = data[1].value
         note = self.data.get(topic)
@@ -214,7 +245,12 @@ class Notes(UserDict, CmdProvider):
         list_of_types = [Topic]
         list_of_prompts = ["Topic: "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         topic = data[0].value
         self.data.pop(topic)
         return f"Note with topic '{topic}' was removed."
@@ -225,7 +261,12 @@ class Notes(UserDict, CmdProvider):
         list_of_types = [Topic, Tags]
         list_of_prompts = ["Topic: ", "Tag(s): "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         topic = data[0].value
         tags = data[1].value
         note = self.data[topic]
@@ -238,8 +279,16 @@ class Notes(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Topic, Tags]
         list_of_prompts = ["Topic: ", "Tag(s): "]
-        list_of_asserts = [self.assert_topic_exist, self.assert_tag_exist_and_remove]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        list_of_asserts = [
+            self.assert_topic_exist,
+            self.assert_tag_exist_and_remove,
+        ]
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         topic = data[0].value
         tags = data[1].value
         return f"Tag(s) {', '.join(tags)} removed from the note with topic '{topic}'."
@@ -250,7 +299,12 @@ class Notes(UserDict, CmdProvider):
         list_of_types = [Topic]
         list_of_prompts = ["Topic: "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         topic = data[0].value
         return str(self.data.get(topic))
 
@@ -260,7 +314,12 @@ class Notes(UserDict, CmdProvider):
         list_of_types = [Tags]
         list_of_prompts = ["Tag(s): "]
         list_of_asserts = []
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         search_tags = data[0].value
         relevant_notes = []
         for note in self.data.values():
@@ -291,8 +350,12 @@ class Notes(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Topic, Reminder]
         list_of_prompts = ["Topic: ", "Reminder: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_topic_exist,
+            mandatory_all_entries=True,
+        )
         topic = data[0].value
         self.data[topic].reminder = data[1]
         return f"Reminder for '{topic}' was set"
@@ -305,7 +368,9 @@ class Notes(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Topic]
         list_of_prompts = ["Topic: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_topic_exist)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_topic_exist
+        )
         topic = data[0].value
         self.data[topic].reminder = None
         return f"Reminder for '{topic}' was deleted"
@@ -321,7 +386,9 @@ class Notes(UserDict, CmdProvider):
             if note.reminder:
                 entry = {
                     "text": note.get_reminder_string(),
-                    "event": datetime.strptime(note.reminder.value, "%d.%m.%Y"),
+                    "event": datetime.strptime(
+                        note.reminder.value, "%d.%m.%Y"
+                    ),
                 }
                 reminders_list.append(entry)
         return reminders_list
@@ -330,7 +397,9 @@ class Notes(UserDict, CmdProvider):
         res_reminders_list = []
         if num_of_days > 0:
             reminders_list = self.repack_reminders_for_search()
-            res_reminders_list = get_entries_for_next_x_days(reminders_list, num_of_days)
+            res_reminders_list = get_entries_for_next_x_days(
+                reminders_list, num_of_days
+            )
         return res_reminders_list
 
     def reminders(self, args):
@@ -339,7 +408,9 @@ class Notes(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Number]
         list_of_prompts = [f"Days (default {num_of_days}): "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, mandatory_first_entry=False)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, mandatory_first_entry=False
+        )
         if not data[0] is None:
             num_of_days = data[0].value
         res_reminders_list = self.__reminders(num_of_days)

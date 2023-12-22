@@ -28,6 +28,7 @@ class YesNo(Field):
             return False
         raise ErrorWithMsg("Must be y|yes|true or n|no|false")
 
+
 class Number(Field):
     """Class for validating number. Mandatory field."""
 
@@ -86,7 +87,14 @@ class Email(Field):
 class Contact:
     """Class for storing contact information, including name, phone, etc."""
 
-    def __init__(self, name: Name, phone=Phone(), email=Email(), birthday=Birthday(), address=Address()):
+    def __init__(
+        self,
+        name: Name,
+        phone=Phone(),
+        email=Email(),
+        birthday=Birthday(),
+        address=Address(),
+    ):
         self.name = name
         self.phone = phone
         self.email = email
@@ -105,8 +113,14 @@ class Contact:
             text += f", address: {self.address}"
         return text
 
-    def set_all(self, name: str = None, phone: str = None, email: str = None, birthday: str = None,
-                address: str = None):
+    def set_all(
+        self,
+        name: str = None,
+        phone: str = None,
+        email: str = None,
+        birthday: str = None,
+        address: str = None,
+    ):
         if not name is None:
             self.name = Name(name)
         if not phone is None:
@@ -122,7 +136,9 @@ class Contact:
 class Contacts(UserDict, CmdProvider):
     ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact '{}' already exists"
     ERROR_MESSAGE_CONTACT_NOT_FOUND = "Contact '{}' is not found"
-    ERROR_EMPTY_CONTACTS_LIST = "Contacts list is empty. Please add some contacts first"
+    ERROR_EMPTY_CONTACTS_LIST = (
+        "Contacts list is empty. Please add some contacts first"
+    )
     WELCOME_BIRTHDAYS_NUM_OF_DAYS = 7
     BIRTHDAYS_NUM_OF_DAYS = 7
     cmds_help = (
@@ -137,15 +153,27 @@ class Contacts(UserDict, CmdProvider):
         ("delete-email", "delete-email", "Delete email of the contact"),
         ("add-birthday", "add-birthday", "Add birthday to the contact"),
         ("edit-birthday", "edit-birthday", "Edit birthday of the contact"),
-        ("delete-birthday", "delete-birthday", "Delete birthday of the contact"),
+        (
+            "delete-birthday",
+            "delete-birthday",
+            "Delete birthday of the contact",
+        ),
         ("add-address", "add-address", "Add address to the contact"),
         ("edit-address", "edit-address", "Edit address of the contact"),
         ("delete-address", "delete-address", "Delete address of the contact"),
         ("find-contact", "find-contact", "Find a contact in the address book"),
         ("find-phone", "find-phone", "Find a phone in the address book"),
         ("find-email", "find-email", "Find an email in the address book"),
-        ("find-birthday", "find-birthday", "Find a birthday in the address book"),
-        ("find-address", "find-address", "Find an address in the address book"),
+        (
+            "find-birthday",
+            "find-birthday",
+            "Find a birthday in the address book",
+        ),
+        (
+            "find-address",
+            "find-address",
+            "Find an address in the address book",
+        ),
         ("birthdays", "birthdays", "Show birthdays for next X days"),
         ("all-contacts", "all-contacts", "Show list of contacts"),
     )
@@ -204,21 +232,33 @@ class Contacts(UserDict, CmdProvider):
     def assert_name_is_free(self, name):
         good_name = Name(name)
         if name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(name))
+            raise ErrorWithMsg(
+                Contacts.ERROR_MESSAGE_CONTACT_ALREADY_EXISTS.format(name)
+            )
         pass
 
     def assert_name_exist(self, name):
         good_name = Name(name)
         if not name in self.data:
-            raise ErrorWithMsg(Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND.format(name))
+            raise ErrorWithMsg(
+                Contacts.ERROR_MESSAGE_CONTACT_NOT_FOUND.format(name)
+            )
         pass
 
     def add_contact(self, args):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Name, Phone, Email, Birthday, Address]
-        list_of_prompts = ["Name: ", "Phone: ", "Email: ", "Birthday: ", "Address: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_is_free)
+        list_of_prompts = [
+            "Name: ",
+            "Phone: ",
+            "Email: ",
+            "Birthday: ",
+            "Address: ",
+        ]
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_name_is_free
+        )
         name = data[0].value
         self.data[name] = Contact(data[0], data[1], data[2], data[3], data[4])
         return f"Contact '{name}' was added"
@@ -229,7 +269,12 @@ class Contacts(UserDict, CmdProvider):
         list_of_types = [Name, Name]
         list_of_prompts = ["Old name: ", "New name: "]
         list_of_asserts = [self.assert_name_exist, self.assert_name_is_free]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_all_entries=True,
+        )
         old_name = data[0].value
         new_name = data[1].value
         contact = self.data.pop(old_name)
@@ -242,7 +287,9 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_name_exist
+        )
         name = data[0].value
         self.data.pop(name)
         return f"Contact '{name}' was deleted"
@@ -252,8 +299,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Phone]
         list_of_prompts = ["Name: ", "Phone: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_name_exist,
+            mandatory_all_entries=True,
+        )
         name = data[0].value
         self.data[name].phone = data[1]
         return f"Phone for '{name}' was set"
@@ -266,7 +317,9 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_name_exist
+        )
         name = data[0].value
         self.data[name].phone = None
         return f"Phone for '{name}' was deleted"
@@ -276,8 +329,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Email]
         list_of_prompts = ["Name: ", "Email: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_name_exist,
+            mandatory_all_entries=True,
+        )
         name = data[0].value
         self.data[name].email = data[1]
         return f"Email for '{name}' was set"
@@ -290,7 +347,9 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_name_exist
+        )
         name = data[0].value
         self.data[name].email = None
         return f"Email for '{name}' was deleted"
@@ -300,8 +359,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Birthday]
         list_of_prompts = ["Name: ", "Birthday: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_name_exist,
+            mandatory_all_entries=True,
+        )
         name = data[0].value
         self.data[name].birthday = data[1]
         return f"Birthday for '{name}' was set"
@@ -314,8 +377,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_name_exist,
+            mandatory_all_entries=True,
+        )
         name = data[0].value
         self.data[name].birthday = None
         return f"Birthday for '{name}' was deleted"
@@ -325,8 +392,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Address]
         list_of_prompts = ["Name: ", "Address: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_name_exist,
+            mandatory_all_entries=True,
+        )
         name = data[0].value
         self.data[name].address = data[1]
         return f"Address for '{name}' was set"
@@ -339,8 +410,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist,
-                                        mandatory_all_entries=True)
+        data = get_extra_data_from_user(
+            list_of_types,
+            list_of_prompts,
+            self.assert_name_exist,
+            mandatory_all_entries=True,
+        )
         name = data[0].value
         self.data[name].address = None
         return f"Address for '{name}' was deleted"
@@ -350,7 +425,9 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name]
         list_of_prompts = ["Name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, self.assert_name_exist
+        )
         return str(self.data[data[0].value])
 
     def find_phone(self, args):
@@ -384,7 +461,9 @@ class Contacts(UserDict, CmdProvider):
         list_of_prompts = ["Birthday: "]
         data = get_extra_data_from_user(list_of_types, list_of_prompts)
         birthday = data[0]
-        contact_list = [str(c) for c in self.data.values() if c.birthday == birthday]
+        contact_list = [
+            str(c) for c in self.data.values() if c.birthday == birthday
+        ]
         if len(contact_list) == 0:
             raise ErrorWithMsg("Birthday date not found.")
         return contact_list
@@ -396,7 +475,9 @@ class Contacts(UserDict, CmdProvider):
         list_of_prompts = ["Address: "]
         data = get_extra_data_from_user(list_of_types, list_of_prompts)
         address = data[0]
-        contact_list = [str(c) for c in self.data.values() if c.address == address]
+        contact_list = [
+            str(c) for c in self.data.values() if c.address == address
+        ]
         if len(contact_list) == 0:
             raise ErrorWithMsg("Address not found.")
         return contact_list
@@ -410,7 +491,9 @@ class Contacts(UserDict, CmdProvider):
             if contact.birthday:
                 entry = {
                     "text": str(contact),
-                    "event": datetime.strptime(contact.birthday.value, "%d.%m.%Y"),
+                    "event": datetime.strptime(
+                        contact.birthday.value, "%d.%m.%Y"
+                    ),
                 }
                 birthday_list.append(entry)
         return birthday_list
@@ -419,7 +502,9 @@ class Contacts(UserDict, CmdProvider):
         res_birthday_list = []
         if num_of_days > 0:
             birthday_list = self.repack_birthdays_for_search()
-            res_birthday_list = get_entries_for_next_x_days(birthday_list, num_of_days)
+            res_birthday_list = get_entries_for_next_x_days(
+                birthday_list, num_of_days
+            )
         return res_birthday_list
 
     def birthdays(self, args):
@@ -428,11 +513,12 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Number]
         list_of_prompts = [f"Days (default {num_of_days}): "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, mandatory_first_entry=False)
+        data = get_extra_data_from_user(
+            list_of_types, list_of_prompts, mandatory_first_entry=False
+        )
         if not data[0] is None:
             num_of_days = data[0].value
         res_birthday_list = self.__birthdays(num_of_days)
         if len(res_birthday_list) == 0:
             return f"No birthdays for next {num_of_days} days"
         return res_birthday_list
-
