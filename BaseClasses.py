@@ -33,7 +33,7 @@ class Field(ABC):
         return self.value
 
     def __eq__(self, other):
-        if type(other) is Field:
+        if isinstance(other, Field):
             return self.__value == other.value
         if type(other) is str:
             return self.__value == other
@@ -107,7 +107,7 @@ def get_extra_data_from_user(list_of_types,
                 return data
             except ErrorWithMsg as er:
                 if len(user_data) == 0:
-                    CLI.print("Mandatory field cannot be empty", style=CLI.MSG_STYLE_ERROR, highlight=False)
+                    CLI.print("This field can not be empty", style=CLI.MSG_STYLE_ERROR, highlight=False)
                 else:
                     CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)
     return data

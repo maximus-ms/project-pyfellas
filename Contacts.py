@@ -314,12 +314,24 @@ class Contacts(UserDict, CmdProvider):
         return  f"Address for '{name}' was deleted"
 
     def find_contact(self, args):
-        #TODO
-        return "TODO find_contact"
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Name]
+        list_of_prompts = ["Name: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        return str(self.data[data[0].value])
 
     def find_phone(self, args):
-        #TODO
-        return "TODO find_phone"
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Phone]
+        list_of_prompts = ["Phone: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts)
+        phone = data[0]
+        contact_list = [ str(c) for c in self.data.values() if c.phone == phone ]
+        if len(contact_list) == 0:
+            raise ErrorWithMsg("Phone is not found")
+        return contact_list
 
     def find_email(self, args):
         #TODO
