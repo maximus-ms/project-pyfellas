@@ -281,7 +281,10 @@ class Notes(UserDict, CmdProvider):
         relevant_notes.sort(key=lambda x: x[1], reverse=True)
         # Extract sorted notes without relevance
         sorted_notes = [note[0] for note in relevant_notes]
-        return [str(note) for note in sorted_notes]
+        notes = [str(note) for note in sorted_notes]
+        if len(notes) == 0:
+            raise ErrorWithMsg("Tag(s) not found")
+        return
 
     def add_reminder(self, args):
         if len(args) > 0:
