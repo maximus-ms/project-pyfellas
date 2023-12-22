@@ -12,6 +12,7 @@ from Book import Book
 from Contacts import Contacts, Name, Number, YesNo
 from Notes import Notes
 
+
 class WordCompleter(Completer):
     def __init__(self, word_list):
         self.word_list = word_list
@@ -21,17 +22,22 @@ class WordCompleter(Completer):
         completions = []
         for word in self.word_list:
             if word.startswith(word_before_cursor):
-                completions.append(Completion(word, start_position=-len(word_before_cursor)))
+                completions.append(
+                    Completion(word, start_position=-len(word_before_cursor))
+                )
                 # Limit the number of suggestions
         return completions
 
 
 class SettingsItem:
-    def __init__(self, name=None, _type=str, checker=None, default=None) -> None:
+    def __init__(
+        self, name=None, _type=str, checker=None, default=None
+    ) -> None:
         self.name = name
         self.type = _type
         self.checker = checker
         self.value = default
+
 
 class Settings:
     def __init__(self) -> None:
@@ -42,13 +48,19 @@ class Settings:
         self.add_setting("Show birthdays", YesNo, None, True)
         self.add_setting("Show reminders", YesNo, None, True)
         self.add_setting("Show quote", YesNo, None, True)
-        self.add_setting("Color theme", Number, CLI.color_scheme_ix_valid, CLI.curr_color_scheme)
+        self.add_setting(
+            "Color theme",
+            Number,
+            CLI.color_scheme_ix_valid,
+            CLI.curr_color_scheme,
+        )
         self.add_setting("Use prompt", YesNo, None, True)
 
     def add_setting(self, name, _type, checker=None, default=None):
         self.data[name] = default
         self.config[name] = SettingsItem(name, _type, checker, default)
         self.order.append(name)
+
 
 class Bot(CmdProvider):
     HELLO_MSG = "Hi{}, this is your assistant"
@@ -128,7 +140,11 @@ class Bot(CmdProvider):
             pass
 
     def save_to_file(self):
-        data = {"contacts": self.book.contacts.data, "notes": self.book.notes.data, "settings":self.settings.data }
+        data = {
+            "contacts": self.book.contacts.data,
+            "notes": self.book.notes.data,
+            "settings": self.settings.data,
+        }
         with open(self.filename, "wb") as f:
             pickle.dump(data, f)
 
@@ -157,17 +173,23 @@ class Bot(CmdProvider):
         for item in self.settings.order:
             list_of_types.append(self.settings.config[item].type)
             if item == "Name":
-                curr = f" (current {self.settings.data[item]})" if self.settings.data[item] else ""
+                curr = (
+                    f" (current {self.settings.data[item]})"
+                    if self.settings.data[item]
+                    else ""
+                )
                 list_of_prompts.append(f"{item} /'~' to delete/{curr} : ")
             else:
-                list_of_prompts.append(f"{item} (current {self.settings.data[item]}): ")
+                list_of_prompts.append(
+                    f"{item} (current {self.settings.data[item]}): "
+                )
             list_of_asserts.append(self.settings.config[item].checker)
         data = get_extra_data_from_user(
-                            list_of_types,
-                            list_of_prompts,
-                            list_of_asserts,
-                            mandatory_first_entry=False
-                        )
+            list_of_types,
+            list_of_prompts,
+            list_of_asserts,
+            mandatory_first_entry=False,
+        )
         cnt = 0
         for i, item in enumerate(self.settings.order):
             if data[i] is None:
@@ -190,10 +212,13 @@ class Bot(CmdProvider):
     def welcome_message(self):
         if Bot.SHOW_WELCOME_QUOTE:
             import requests
+
             response = requests.get("https://zenquotes.io/api/random").json()
-            q = response[0]['q']
-            a = response[0]['a']
-            random_quote = f'Quote for today: "{q}" - {a} (https://zenquotes.io/)'
+            q = response[0]["q"]
+            a = response[0]["a"]
+            random_quote = (
+                f'Quote for today: "{q}" - {a} (https://zenquotes.io/)'
+            )
             return random_quote
         else:
             return ""
@@ -250,15 +275,16 @@ class Bot(CmdProvider):
             return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
                 Bot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
             )
-        #TODO enable this exception catch
-        # except Exception as e:
-        #     return str(e)
+        except Exception as e:
+            return str(e)
 
     def cmd_input(self, msg, style=CLI.MSG_STYLE_DEFAULT):
-        if 'Darwin' == platform.system():
+        if "Darwin" == platform.system():
             self.use_prompt = False
         if self.use_prompt:
-            user_input = prompt(msg, completer=self.cmd_completer, reserve_space_for_menu=5)
+            user_input = prompt(
+                msg, completer=self.cmd_completer, reserve_space_for_menu=5
+            )
         else:
             formatted_msg = Text(msg, style=style)
             user_input = CLI.input(formatted_msg)
@@ -308,22 +334,37 @@ class Bot(CmdProvider):
                 return
 
     def run(self):
-        CLI.print(Bot.HELLO_MSG.format(self.name), style=CLI.MSG_STYLE_WELCOME, highlight=False)
+        CLI.print(
+            Bot.HELLO_MSG.format(self.name),
+            style=CLI.MSG_STYLE_WELCOME,
+            highlight=False,
+        )
         for member in self.__list_of_cmds_providers:
             message = member.welcome_message()
             if message:
-                CLI.print(f"  {message}", style=CLI.MSG_STYLE_WELCOME, highlight=False)
+                CLI.print(
+                    f"  {message}",
+                    style=CLI.MSG_STYLE_WELCOME,
+                    highlight=False,
+                )
 
-        CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
+        CLI.print(
+            Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False
+        )
 
-        #TODO
         try:
             while not self.__finish:
                 try:
                     self.__is_error = False
-                    cmd, args = self.get_input(Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT)
+                    cmd, args = self.get_input(
+                        Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT
+                    )
                     if "__empty__" == cmd:
-                        CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
+                        CLI.print(
+                            Bot.HELLO_HELP_MSG,
+                            style=CLI.MSG_STYLE_HINT,
+                            highlight=False,
+                        )
                     else:
                         res = self.exe_cmd(cmd, args)
                         if self.__is_error:
@@ -335,11 +376,8 @@ class Bot(CmdProvider):
                 except KeyboardInterrupt:
                     Bot.print_all(Bot.BYE_MSG, style=CLI.MSG_STYLE_OK)
                     self.__finish = True
-        #TODO
-        except KeyboardInterrupt as e:
-        # except Exception as e:
-            #TODO delete this print
-            print(e)
+
+        except Exception as e:
             pass
 
         self.save_to_file()

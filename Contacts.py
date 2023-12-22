@@ -20,6 +20,8 @@ class Name(Field):
         if self.value is None:
             return 0
         return len(self.value)
+
+
 class YesNo(Field):
     """Class for validating number. Mandatory field."""
 
