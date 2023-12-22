@@ -1,4 +1,6 @@
+import os
 import pickle
+from pathlib import Path
 from Contacts import Contacts
 from Notes import Notes
 
@@ -9,7 +11,7 @@ class Book:
     def __init__(self, filename=None) -> None:
         self.contacts = Contacts()
         self.notes = Notes()
-        self.filename = filename
+        self.filename = Path(__file__).parent / filename
         self.load_from_file()
 
     def load_from_file(self):
