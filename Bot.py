@@ -1,11 +1,16 @@
 from collections import defaultdict, OrderedDict
 import platform
+import os
+import pickle
+from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import Completer, Completion
 from rich.console import Text
 
 from BaseClasses import *
 from Book import Book
+from Contacts import Contacts, Name, Number, YesNo
+from Notes import Notes
 
 class WordCompleter(Completer):
     def __init__(self, word_list):
@@ -20,6 +25,24 @@ class WordCompleter(Completer):
                 # Limit the number of suggestions
         return completions
 
+
+class SettingsItem:
+    def __init__(self, name=None, _type=str, checker=None, default=None) -> None:
+        self.name = name
+        self.type = _type
+        self.checker = checker
+        self.value = default
+
+class Settings:
+    def __init__(self) -> None:
+        self.data = []
+        self.add_setting("Name", Name, None, None)
+        self.add_setting("Show birthdays", YesNo, None, True)
+        self.add_setting("Show reminders", YesNo, None, True)
+        self.add_setting("Show quote", YesNo, None, True)
+
+    def add_setting(self, name, _type, checker=None, default=None):
+        self.data.append({name: SettingsItem(name, _type, checker, default)})
 
 class Bot(CmdProvider):
     HELLO_MSG = "Hi, this is your assistant"
@@ -40,7 +63,11 @@ class Bot(CmdProvider):
         ("q", "q|exit|close", "Finish to work with an assistant."),
     )
 
-    def __init__(self, book: Book):
+    def __init__(self, filename: str):
+        self.book = Book()
+        self.settings = Settings()
+        self.filename = Path(__file__).parent / filename
+        self.load_from_file()
         self.__finish = False
         self.__is_error = False
         self.cmds = {
@@ -50,7 +77,6 @@ class Bot(CmdProvider):
             "close": self.exit,
             "q": self.exit,
         }
-        self.book = book
         self.__list_of_cmds_providers = [
             self.book.contacts,
             self.book.notes,
@@ -74,6 +100,24 @@ class Bot(CmdProvider):
 
     def __get_cmds_list(self):
         return self.exes.keys()
+
+    def load_from_file(self):
+        try:
+            with open(self.filename, "rb") as f:
+                data = pickle.load(f)
+                if "contacts" in data:
+                    self.book.contacts.data = data.get("contacts", Contacts())
+                if "notes" in data:
+                    self.book.notes.data = data.get("notes", Notes())
+                if "settings" in data:
+                    self.settings.data = data.get("settings", Settings())
+        except:
+            pass
+
+    def save_to_file(self):
+        data = {"contacts": self.book.contacts.data, "notes": self.book.notes.data, "settings":self.settings.data }
+        with open(self.filename, "wb") as f:
+            pickle.dump(data, f)
 
     def help(self):
         return Bot.__cmds_help
@@ -229,4 +273,4 @@ class Bot(CmdProvider):
             print(e)
             pass
 
-        self.book.save_to_file()
+        self.save_to_file()

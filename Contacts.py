@@ -17,6 +17,17 @@ class Name(Field):
         raise ErrorWithMsg("Name must be a string")
 
 
+class YesNo(Field):
+    """Class for validating number. Mandatory field."""
+
+    def validate(self, yesno: str):
+        yesno = yesno.strip().lower()
+        if yesno in ("y", "yes" "true"):
+            return True
+        elif yesno in ("n", "no", "false"):
+            return False
+        raise ErrorWithMsg("Must be y|yes|true or n|no|false")
+
 class Number(Field):
     """Class for validating number. Mandatory field."""
 

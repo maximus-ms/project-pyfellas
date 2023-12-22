@@ -1,10 +1,8 @@
 from Bot import Bot
-from Book import Book
 
 
 def main():
-    book = Book("assistant.data")
-    bot = Bot(book)
+    bot = Bot("assistant.data")
     bot.run()
 
     pass
