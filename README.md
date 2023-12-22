@@ -76,4 +76,4 @@ New settings applied
 #
 #
 #
-######Enjoy. And let the power be with you
+Enjoy. And let the power be with you
