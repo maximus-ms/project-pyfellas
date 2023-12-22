@@ -77,31 +77,36 @@ def get_extra_data_from_user(list_of_types,
                              assert_validator=None,
                              mandatory_first_entry=True,
                              mandatory_all_entries=False):
-    first_entry = True
     num = min(len(list_of_types), len(list_of_prompts))
     data = [None] * num
+    assert_validators = [None] * num
+    if type(assert_validator) is list:
+        assert_validators = assert_validator + assert_validators
+    else:
+        assert_validators[0] = assert_validator
     for i in range(num):
+        is_current_entry_mandatory = mandatory_first_entry or mandatory_all_entries
         current_prompt = Text(list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT)
         while True:
             user_data = ""
             try:
                 user_data = CLI.input(current_prompt)
                 user_data = user_data.strip()
-                if len(user_data) == 0 and (not mandatory_all_entries):
-                    if not (first_entry and mandatory_first_entry):
-                        break
-                if first_entry:
-                    good_data = list_of_types[i](user_data)
-                    if assert_validator:
-                        assert_validator(good_data.value)
+                if len(user_data) == 0 and (not is_current_entry_mandatory):
+                    break
+                good_data = list_of_types[i](user_data)
+                if assert_validators[i]:
+                    assert_validators[i](good_data.value)
                 data[i] = list_of_types[i](user_data)
-                first_entry = False
+                mandatory_first_entry = False
                 break
             except KeyboardInterrupt:
                 CLI.print()
+                if is_current_entry_mandatory:
+                    raise ErrorWithMsg("Command was interrupted")
                 return data
             except ErrorWithMsg as er:
-                if first_entry and len(user_data) == 0:
+                if len(user_data) == 0:
                     CLI.print("Mandatory field cannot be empty", style=CLI.MSG_STYLE_ERROR, highlight=False)
                 else:
                     CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)

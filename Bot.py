@@ -1,4 +1,5 @@
 from collections import defaultdict, OrderedDict
+import platform
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import Completer, Completion
 from rich.console import Text
@@ -136,7 +137,8 @@ class Bot(CmdProvider):
         #     return str(e)
 
     def cmd_input(self, msg, style=CLI.MSG_STYLE_DEFAULT, use_prompt=True):
-        #TODO add checker if iOS and use_prompt=False
+        if 'Darwin' == platform.system():
+            use_prompt = False
         if use_prompt:
             user_input = prompt(msg, completer=self.cmd_completer, reserve_space_for_menu=5)
         else:
@@ -185,8 +187,7 @@ class Bot(CmdProvider):
         CLI.print(Bot.HELLO_MSG, style=CLI.MSG_STYLE_WELCOME, highlight=False)
         CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
         #TODO
-        if 1:
-        # try:
+        try:
             while not self.__finish:
                 try:
                     self.__is_error = False
@@ -200,9 +201,9 @@ class Bot(CmdProvider):
                 except KeyboardInterrupt:
                     Bot.print_all(Bot.BYE_MSG, style=CLI.MSG_STYLE_OK)
                     self.__finish = True
-        # except Exception as e:
+        except Exception as e:
             #TODO delete this print
-            # print(e)
-            # pass
+            print(e)
+            pass
 
         self.book.save_to_file()

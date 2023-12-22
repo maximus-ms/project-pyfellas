@@ -16,12 +16,12 @@ class Book:
         try:
             with open(self.filename, "rb") as f:
                 data = pickle.load(f)
-                self.contacts = data.get("contacts", Contacts())
-                self.notes = data.get("notes", Notes())
+                self.contacts.data = data.get("contacts", Contacts())
+                self.notes.data = data.get("notes", Notes())
         except:
             pass
 
     def save_to_file(self):
-        data = {"contacts": self.contacts, "notes": self.notes}
+        data = {"contacts": self.contacts.data, "notes": self.notes.data}
         with open(self.filename, "wb") as f:
             pickle.dump(data, f)

@@ -202,10 +202,10 @@ class Contacts(UserDict, CmdProvider):
             raise ValueError
         list_of_types = [Name, Name]
         list_of_prompts = ["Old name: ", "New name: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts, self.assert_name_exist)
+        list_of_asserts = [self.assert_name_exist, self.assert_name_is_free]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts, list_of_asserts, mandatory_all_entries=True)
         old_name = data[0].value
         new_name = data[1].value
-        self.assert_name_is_free(new_name)
         contact = self.data.pop(old_name)
         contact.name = new_name
         self.data[new_name] = contact
