@@ -355,13 +355,29 @@ class Contacts(UserDict, CmdProvider):
         return contact_list
 
     def find_email(self, args):
-        # TODO
-        return "TODO find_email"
-
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Email]
+        list_of_prompts = ["Email: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts)
+        email = data[0]
+        contact_list = [str(c) for c in self.data.values() if c.email == email]
+        if len(contact_list) == 0:
+            raise ErrorWithMsg("Email is not found")
+        return contact_list
+        
     def find_birthday(self, args):
-        # TODO
-        return "TODO find_birthday"
-
+        if len(args) > 0:
+            raise ValueError
+        list_of_types = [Birthday]
+        list_of_prompts = ["Birthday: "]
+        data = get_extra_data_from_user(list_of_types, list_of_prompts)
+        email = data[0]
+        contact_list = [str(c) for c in self.data.values() if c.birthday == birthday]
+        if len(contact_list) == 0:
+            raise ErrorWithMsg("Birthday date not found.")
+        return contact_list
+    
     def address(self, args):
         # TODO
         return "TODO address"
