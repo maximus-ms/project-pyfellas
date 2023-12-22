@@ -387,7 +387,7 @@ class Contacts(UserDict, CmdProvider):
         address = data[0]
         contact_list = [str(c) for c in self.data.values() if c.address == address]
         if len(contact_list) == 0:
-            raise ErrorWithMsg("Address date not found.")
+            raise ErrorWithMsg("Address not found.")
         return contact_list
 
     def all_contacts(self, args):
