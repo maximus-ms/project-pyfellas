@@ -109,6 +109,7 @@ class Contacts(UserDict, CmdProvider):
     ERROR_MESSAGE_CONTACT_ALREADY_EXISTS = "Contact '{}' already exists"
     ERROR_MESSAGE_CONTACT_NOT_FOUND = "Contact '{}' is not found"
     ERROR_EMPTY_CONTACTS_LIST = "Contacts list is empty. Please add some contacts first"
+    WELCOME_BIRTHDAYS_NUM_OF_DAYS = 7
     BIRTHDAYS_NUM_OF_DAYS = 7
     cmds_help = (
         ("add-contact", "add-contact", "Add contact to address book"),
@@ -131,7 +132,7 @@ class Contacts(UserDict, CmdProvider):
         ("find-email","find-email","Find an email in the address book"),
         ("find-birthday","find-birthday","Find a birthday in the address book"),
         ("find-address","find-address","Find an address in the address book"),
-        ("birthdays", "birthdays [x_days]", "Show birthdays for next X days"),
+        ("birthdays", "birthdays", "Show birthdays for next X days"),
         ("all-contacts", "all-contacts", "Show list of contacts"),
     )
 
@@ -163,6 +164,17 @@ class Contacts(UserDict, CmdProvider):
 
     def __str__(self):
         return "\n".join(self.get_str_list_of_contacts())
+
+    def welcome_message(self):
+        bd_contacts = self.__birthdays(Contacts.WELCOME_BIRTHDAYS_NUM_OF_DAYS)
+        num = 0
+        for contact in bd_contacts:
+            if "Name" in contact:
+                num += 1
+        if num > 0:
+            return f"You have {num} birthday(s) during next {Contacts.WELCOME_BIRTHDAYS_NUM_OF_DAYS} day(s)"
+        else:
+            return ""
 
     def get_str_list_of_contacts(self):
         if len(self.data) == 0:
@@ -359,6 +371,13 @@ class Contacts(UserDict, CmdProvider):
                 birthday_list.append(entry)
         return birthday_list
 
+    def __birthdays(self, num_of_days):
+        res_birthday_list = []
+        if num_of_days > 0:
+            birthday_list = self.repack_birthdays_for_search()
+            res_birthday_list = get_entries_for_next_x_days(birthday_list, num_of_days)
+        return res_birthday_list
+
     def birthdays(self, args):
         num_of_days = Contacts.BIRTHDAYS_NUM_OF_DAYS
         if len(args) > 0:
@@ -368,10 +387,7 @@ class Contacts(UserDict, CmdProvider):
         data = get_extra_data_from_user(list_of_types, list_of_prompts, mandatory_first_entry=False)
         if not data[0] is None:
             num_of_days = data[0].value
-        res_birthday_list = []
-        if num_of_days > 0:
-            birthday_list = self.repack_birthdays_for_search()
-            res_birthday_list = get_entries_for_next_x_days(birthday_list, num_of_days)
+        res_birthday_list = self.__birthdays(num_of_days)
         if len(res_birthday_list) == 0:
             return f"No birthdays for next {num_of_days} days"
         return res_birthday_list

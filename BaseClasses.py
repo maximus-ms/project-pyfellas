@@ -71,6 +71,8 @@ class CmdProvider(ABC):
         return []
         # return _Your_class_name_.__cmds_example
 
+    def welcome_message(self):
+        return None
 
 def get_extra_data_from_user(list_of_types,
                              list_of_prompts,

@@ -23,13 +23,14 @@ class WordCompleter(Completer):
 
 class Bot(CmdProvider):
     HELLO_MSG = "Hi, this is your assistant"
-    HELLO_HELP_MSG = "  ('h|help' for detailed information)"
+    HELLO_HELP_MSG = "write your command ('h|help' for details)"
     BYE_MSG = "Bye!"
     PROMPT_MSG = ">>> "
     INVALID_CMD_MSG = "Invalid command!"
     HELP_MESSAGE_HEAD = "\n List of supported commands:"
-    HELP_MSG_CMDS_FORMAT = "    {:<35} : {}"
+    HELP_MSG_CMDS_FORMAT = "    {:<25} : {}"
     PARSING_ERROR_MSG_CMDS_FORMAT = "{}\nExpected format: {}"
+    SHOW_WELCOME_QUOTE = True
 
     __cmds_help = (
         ("help", "h|help", "Show this message."),
@@ -79,6 +80,17 @@ class Bot(CmdProvider):
 
     def exe(self, cmd, args):
         return self.cmds[cmd](args)
+
+    def welcome_message(self):
+        if Bot.SHOW_WELCOME_QUOTE:
+            import requests
+            response = requests.get("https://zenquotes.io/api/random").json()
+            q = response[0]['q']
+            a = response[0]['a']
+            random_quote = f'Quote for today: "{q}" - {a} (https://zenquotes.io/)'
+            return random_quote
+        else:
+            return ""
 
     def cmd_errors(func):
         def inner(*args, **kwargs):
@@ -153,7 +165,7 @@ class Bot(CmdProvider):
             ret = cmd.strip().lower(), args
         except Exception as e:
             self.__is_error = True
-            ret = "__unknown_cmd", (None,)
+            ret = "__empty__", (None,)
         return ret
 
     def print_all(data, style=None):
@@ -177,7 +189,7 @@ class Bot(CmdProvider):
                 if index >= len(data):
                     break
                 in_data = CLI.input(prompt)
-                if in_data == "q" or in_data == "Q":
+                if in_data.lower() == "q":
                     break
         except:
             CLI.print()
@@ -185,23 +197,34 @@ class Bot(CmdProvider):
 
     def run(self):
         CLI.print(Bot.HELLO_MSG, style=CLI.MSG_STYLE_WELCOME, highlight=False)
+        for member in self.__list_of_cmds_providers:
+            message = member.welcome_message()
+            if message:
+                CLI.print(f"  {message}", style=CLI.MSG_STYLE_WELCOME, highlight=False)
+
         CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
+
         #TODO
         try:
             while not self.__finish:
                 try:
                     self.__is_error = False
                     cmd, args = self.get_input(Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT)
-                    res = self.exe_cmd(cmd, args)
-                    if self.__is_error:
-                        style = CLI.MSG_STYLE_ERROR
+                    if "__empty__" == cmd:
+                        CLI.print(Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False)
                     else:
-                        style = CLI.MSG_STYLE_OK
-                    Bot.print_all(res, style=style)
+                        res = self.exe_cmd(cmd, args)
+                        if self.__is_error:
+                            style = CLI.MSG_STYLE_ERROR
+                        else:
+                            style = CLI.MSG_STYLE_OK
+                        Bot.print_all(res, style=style)
                 except KeyboardInterrupt:
                     Bot.print_all(Bot.BYE_MSG, style=CLI.MSG_STYLE_OK)
                     self.__finish = True
-        except Exception as e:
+        #TODO
+        except KeyboardInterrupt as e:
+        # except Exception as e:
             #TODO delete this print
             print(e)
             pass
