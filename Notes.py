@@ -343,7 +343,7 @@ class Notes(UserDict, CmdProvider):
         notes = [str(note) for note in sorted_notes]
         if len(notes) == 0:
             raise ErrorWithMsg("Tag(s) not found")
-        return
+        return notes
 
     def add_reminder(self, args):
         if len(args) > 0:
