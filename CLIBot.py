@@ -349,7 +349,7 @@ class CLIBot(CmdProvider, FrontBase):
             return ret
         except ErrorWithMsg as e:
             return e
-        except ValueError as e:
+        except (ValueError, IndexError) as e:
             return CLIBot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
                 CLIBot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
             )

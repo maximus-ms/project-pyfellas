@@ -156,7 +156,11 @@ class Contacts(UserDict, CmdProvider):
         ("add-email", "add-email ", "Add email to the contact"),
         ("edit-email", "edit-email", "Edit email of the contact"),
         ("delete-email", "delete-email", "Delete email of the contact"),
-        ("add-birthday", "add-birthday", "Add birthday to the contact"),
+        (
+            "add-birthday",
+            "add-birthday <name> <date>",
+            "Add birthday to the contact",
+        ),
         ("edit-birthday", "edit-birthday", "Edit birthday of the contact"),
         (
             "delete-birthday",
@@ -366,16 +370,20 @@ class Contacts(UserDict, CmdProvider):
         return f"Email for '{name}' was deleted"
 
     def add_birthday(self, args, get_extra_data_from_user_handler):
-        if len(args) > 0:
-            raise ValueError
         list_of_types = [Name, Birthday]
-        list_of_prompts = ["Name: ", "Birthday: "]
-        data = get_extra_data_from_user_handler(
-            list_of_types,
-            list_of_prompts,
-            self.assert_name_exist,
-            mandatory_all_entries=True,
-        )
+        data = list()
+        if len(args) > 0:
+            for i in range(len(list_of_types)):
+                data.append(list_of_types[i](args[i]))
+        else:
+            list_of_prompts = ["Name: ", "Birthday: "]
+            data = get_extra_data_from_user_handler(
+                list_of_types,
+                list_of_prompts,
+                self.assert_name_exist,
+                mandatory_all_entries=True,
+            )
+
         name = data[0].value
         self.data[name].birthday = data[1]
         return f"Birthday for '{name}' was set"
