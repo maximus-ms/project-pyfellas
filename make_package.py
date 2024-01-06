@@ -9,8 +9,8 @@ project_description = "Personal assistant"
 project_url = "https://github.com/maximus-ms/project-pyfellas"
 project_files = (
     "BaseClasses.py",
-    "Book.py",
-    "Bot.py",
+    "Assistant.py",
+    "CLIBot.py",
     "Contacts.py",
     "Notes.py",
     "main.py",

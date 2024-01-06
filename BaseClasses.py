@@ -5,38 +5,6 @@ from calendar import isleap, day_name
 from rich.console import Console, Text
 
 
-class CLI:
-    COLOR_SCHEME = (
-        (None, None, None, None, None, None),
-        (None, "green", "magenta", "green", "red", "grey0"),
-    )
-    curr_color_scheme = 1
-    MSG_STYLE_DEFAULT = None
-    MSG_STYLE_WELCOME = "green"
-    MSG_STYLE_PROMPT = "magenta"
-    MSG_STYLE_OK = "green"
-    MSG_STYLE_ERROR = "red"
-    MSG_STYLE_HINT = "grey0"
-    console = Console()
-    print = console.print
-    input = console.input
-
-    def apply_color_scheme(ix):
-        if ix >= len(CLI.COLOR_SCHEME):
-            return
-        CLI.curr_color_scheme = ix
-        CLI.MSG_STYLE_DEFAULT = CLI.COLOR_SCHEME[ix][0]
-        CLI.MSG_STYLE_WELCOME = CLI.COLOR_SCHEME[ix][1]
-        CLI.MSG_STYLE_PROMPT = CLI.COLOR_SCHEME[ix][2]
-        CLI.MSG_STYLE_OK = CLI.COLOR_SCHEME[ix][3]
-        CLI.MSG_STYLE_ERROR = CLI.COLOR_SCHEME[ix][4]
-        CLI.MSG_STYLE_HINT = CLI.COLOR_SCHEME[ix][5]
-
-    def color_scheme_ix_valid(ix):
-        if ix >= len(CLI.COLOR_SCHEME):
-            raise ErrorWithMsg("Color theme should be in a range [0..1]")
-
-
 class ErrorWithMsg(Exception):
     pass
 
@@ -80,7 +48,7 @@ class CmdProvider(ABC):
     #   )
 
     @abstractmethod
-    def exe(self, cmd, args):
+    def exe(self, cmd, args, get_extra_data_from_user_handler):
         raise ErrorWithMsg("Unknown exe()")
         # if cmd == "cmd1":
         # return self.cmd1(args)
@@ -91,57 +59,42 @@ class CmdProvider(ABC):
         return []
         # return _Your_class_name_.__cmds_example
 
+    @abstractmethod
+    def get_for_file(self):
+        raise ErrorWithMsg("Unknown get_for_file()")
+        return []
+
+    @abstractmethod
+    def set_from_file(self):
+        raise ErrorWithMsg("Unknown load_from_file()")
+        return []
+
     def welcome_message(self):
         return None
 
 
-def get_extra_data_from_user(
-    list_of_types,
-    list_of_prompts,
-    assert_validator=None,
-    mandatory_first_entry=True,
-    mandatory_all_entries=False,
-):
-    num = min(len(list_of_types), len(list_of_prompts))
-    data = [None] * num
-    assert_validators = [None] * num
-    if type(assert_validator) is list:
-        assert_validators = assert_validator + assert_validators
-    else:
-        assert_validators[0] = assert_validator
-    for i in range(num):
-        is_current_entry_mandatory = (
-            mandatory_first_entry or mandatory_all_entries
-        )
-        current_prompt = Text(list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT)
-        while True:
-            user_data = ""
-            try:
-                user_data = CLI.input(current_prompt)
-                user_data = user_data.strip()
-                if len(user_data) == 0 and (not is_current_entry_mandatory):
-                    break
-                good_data = list_of_types[i](user_data)
-                if assert_validators[i]:
-                    assert_validators[i](good_data.value)
-                data[i] = list_of_types[i](user_data)
-                mandatory_first_entry = False
-                break
-            except KeyboardInterrupt:
-                CLI.print()
-                if is_current_entry_mandatory:
-                    raise ErrorWithMsg("Command was interrupted")
-                return data
-            except ErrorWithMsg as er:
-                if len(user_data) == 0:
-                    CLI.print(
-                        "This field can not be empty",
-                        style=CLI.MSG_STYLE_ERROR,
-                        highlight=False,
-                    )
-                else:
-                    CLI.print(er, style=CLI.MSG_STYLE_ERROR, highlight=False)
-    return data
+class FrontBase(ABC):
+    @abstractmethod
+    def set_cmd_providers(self, items):
+        raise ErrorWithMsg("Unknown set_cmd_providers()")
+
+    @abstractmethod
+    def set_save_handler(self, handler):
+        raise ErrorWithMsg("Unknown set_save_handler()")
+
+    @abstractmethod
+    def run(self, handler):
+        raise ErrorWithMsg("Unknown run()")
+
+    @abstractmethod
+    def get_extra_data_from_user(
+        list_of_types,
+        list_of_prompts,
+        assert_validator=None,
+        mandatory_first_entry=True,
+        mandatory_all_entries=False,
+    ):
+        raise ErrorWithMsg("Unknown get_extra_data_from_user()")
 
 
 def get_entries_for_next_x_days(

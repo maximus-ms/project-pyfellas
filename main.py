@@ -1,10 +1,9 @@
-from Bot import Bot
+from Assistant import Assistant
 
 
 def main():
-    bot = Bot("assistant.data")
-    bot.run()
-
+    assistant = Assistant("assistant.data")
+    assistant.run()
     pass
 
 

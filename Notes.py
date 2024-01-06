@@ -6,7 +6,6 @@ from BaseClasses import (
     CmdProvider,
     ErrorWithMsg,
     Field,
-    get_extra_data_from_user,
     get_entries_for_next_x_days,
 )
 from Contacts import Number
@@ -155,8 +154,14 @@ class Notes(UserDict, CmdProvider):
     def help(self):
         return Notes.cmds_help
 
-    def exe(self, cmd, args):
-        return self.cmds[cmd](args)
+    def exe(self, cmd, args, get_extra_data_from_user_handler):
+        return self.cmds[cmd](args, get_extra_data_from_user_handler)
+
+    def get_for_file(self):
+        return self.data
+
+    def set_from_file(self, data):
+        self.data = data
 
     def assert_topic_is_absent(self, topic: str) -> None:
         if topic in self.data:
@@ -184,19 +189,19 @@ class Notes(UserDict, CmdProvider):
             else:
                 raise ErrorWithMsg(Notes.ERROR_MESSAGE_TAG_NOT_FOUND)
 
-    def add_note(self, args):
+    def add_note(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic, Text, Tags, Reminder]
         list_of_prompts = ["Topic: ", "Text: ", "Tags: ", "Reminder: "]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types, list_of_prompts, self.assert_topic_is_absent
         )
         topic = data[0].value
         self.data[topic] = Note(data[0], data[1], data[2], data[3])
         return f"Note with topic '{topic}' was added."
 
-    def rename_note(self, args):
+    def rename_note(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic, Topic]
@@ -205,7 +210,7 @@ class Notes(UserDict, CmdProvider):
             self.assert_topic_exist,
             self.assert_topic_is_absent,
         ]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -220,13 +225,13 @@ class Notes(UserDict, CmdProvider):
             f"Note with topic '{old_topic}' has been renamed to '{new_topic}'."
         )
 
-    def edit_note(self, args):
+    def edit_note(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic, Text]
         list_of_prompts = ["Topic: ", "New text: "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -239,13 +244,13 @@ class Notes(UserDict, CmdProvider):
         note.text_tags = Note.extract_hashtags(new_text)
         return f"Text of the note '{topic}' was changed, and text tags were updated."
 
-    def delete_note(self, args):
+    def delete_note(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic]
         list_of_prompts = ["Topic: "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -255,13 +260,13 @@ class Notes(UserDict, CmdProvider):
         self.data.pop(topic)
         return f"Note with topic '{topic}' was removed."
 
-    def add_tag(self, args):
+    def add_tag(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic, Tags]
         list_of_prompts = ["Topic: ", "Tag(s): "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -274,7 +279,7 @@ class Notes(UserDict, CmdProvider):
         note.user_tags += cleaned_tags
         return f"Tag(s) {', '.join(cleaned_tags)} added to the note with topic '{topic}'."
 
-    def delete_tag(self, args):
+    def delete_tag(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic, Tags]
@@ -283,7 +288,7 @@ class Notes(UserDict, CmdProvider):
             self.assert_topic_exist,
             self.assert_tag_exist_and_remove,
         ]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -293,13 +298,13 @@ class Notes(UserDict, CmdProvider):
         tags = data[1].value
         return f"Tag(s) {', '.join(tags)} removed from the note with topic '{topic}'."
 
-    def find_note_by_topic(self, args):
+    def find_note_by_topic(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic]
         list_of_prompts = ["Topic: "]
         list_of_asserts = [self.assert_topic_exist]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -308,13 +313,15 @@ class Notes(UserDict, CmdProvider):
         topic = data[0].value
         return str(self.data.get(topic))
 
-    def mixed_search_notes_by_tags(self, args):
+    def mixed_search_notes_by_tags(
+        self, args, get_extra_data_from_user_handler
+    ):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Tags]
         list_of_prompts = ["Tag(s): "]
         list_of_asserts = []
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -345,12 +352,12 @@ class Notes(UserDict, CmdProvider):
             raise ErrorWithMsg("Tag(s) not found")
         return notes
 
-    def add_reminder(self, args):
+    def add_reminder(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic, Reminder]
         list_of_prompts = ["Topic: ", "Reminder: "]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types,
             list_of_prompts,
             self.assert_topic_exist,
@@ -360,22 +367,22 @@ class Notes(UserDict, CmdProvider):
         self.data[topic].reminder = data[1]
         return f"Reminder for '{topic}' was set"
 
-    def edit_reminder(self, args):
+    def edit_reminder(self, args, get_extra_data_from_user_handler):
         return self.add_reminder(args)
 
-    def delete_reminder(self, args):
+    def delete_reminder(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         list_of_types = [Topic]
         list_of_prompts = ["Topic: "]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types, list_of_prompts, self.assert_topic_exist
         )
         topic = data[0].value
         self.data[topic].reminder = None
         return f"Reminder for '{topic}' was deleted"
 
-    def show_all_notes(self, args):
+    def show_all_notes(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         return self.get_str_list_of_notes()
@@ -402,13 +409,13 @@ class Notes(UserDict, CmdProvider):
             )
         return res_reminders_list
 
-    def reminders(self, args):
+    def reminders(self, args, get_extra_data_from_user_handler):
         num_of_days = Notes.REMINDERS_NUM_OF_DAYS
         if len(args) > 0:
             raise ValueError
         list_of_types = [Number]
         list_of_prompts = [f"Days (default {num_of_days}): "]
-        data = get_extra_data_from_user(
+        data = get_extra_data_from_user_handler(
             list_of_types, list_of_prompts, mandatory_first_entry=False
         )
         if not data[0] is None:
@@ -418,13 +425,13 @@ class Notes(UserDict, CmdProvider):
             return f"No reminders for next {num_of_days} days"
         return res_reminders_list
 
-    def find_note_by_reminder(self, args):
+    def find_note_by_reminder(self, args, get_extra_data_from_user_handler):
         if len(args) > 0:
             raise ValueError
         relevant_notes = []
         list_of_types = [Reminder]
         list_of_prompts = ["Reminder date: "]
-        data = get_extra_data_from_user(list_of_types, list_of_prompts)
+        data = get_extra_data_from_user_handler(list_of_types, list_of_prompts)
         reminder_date = data[0]
         for note in self.data.values():
             if note.reminder == reminder_date:

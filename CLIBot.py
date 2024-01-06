@@ -1,17 +1,45 @@
 from collections import defaultdict, OrderedDict
 import platform
-import os
-import pickle
 import requests
-from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import Completer, Completion
 from rich.console import Text
 
 from BaseClasses import *
-from Book import Book
 from Contacts import Contacts, Name, Number, YesNo
 from Notes import Notes
+
+
+class CLI:
+    COLOR_SCHEME = (
+        (None, None, None, None, None, None),
+        (None, "green", "magenta", "green", "red", "grey0"),
+    )
+    curr_color_scheme = 1
+    MSG_STYLE_DEFAULT = None
+    MSG_STYLE_WELCOME = "green"
+    MSG_STYLE_PROMPT = "magenta"
+    MSG_STYLE_OK = "green"
+    MSG_STYLE_ERROR = "red"
+    MSG_STYLE_HINT = "grey0"
+    console = Console()
+    print = console.print
+    input = console.input
+
+    def apply_color_scheme(ix):
+        if ix >= len(CLI.COLOR_SCHEME):
+            return
+        CLI.curr_color_scheme = ix
+        CLI.MSG_STYLE_DEFAULT = CLI.COLOR_SCHEME[ix][0]
+        CLI.MSG_STYLE_WELCOME = CLI.COLOR_SCHEME[ix][1]
+        CLI.MSG_STYLE_PROMPT = CLI.COLOR_SCHEME[ix][2]
+        CLI.MSG_STYLE_OK = CLI.COLOR_SCHEME[ix][3]
+        CLI.MSG_STYLE_ERROR = CLI.COLOR_SCHEME[ix][4]
+        CLI.MSG_STYLE_HINT = CLI.COLOR_SCHEME[ix][5]
+
+    def color_scheme_ix_valid(ix):
+        if ix >= len(CLI.COLOR_SCHEME):
+            raise ErrorWithMsg("Color theme should be in a range [0..1]")
 
 
 class WordCompleter(Completer):
@@ -63,7 +91,7 @@ class Settings:
         self.order.append(name)
 
 
-class Bot(CmdProvider):
+class CLIBot(CmdProvider, FrontBase):
     HELLO_MSG = "Hi{}, this is your assistant"
     HELLO_HELP_MSG = "write your command ('h|help' for details)"
     BYE_MSG = "Bye!"
@@ -86,13 +114,11 @@ class Bot(CmdProvider):
         ("q", "q|exit|close", "Finish to work with an assistant"),
     )
 
-    def __init__(self, filename: str):
+    def __init__(self):
+        self.save_handler = None
         self.name = ""
         self.use_prompt = True
-        self.book = Book()
         self.settings = Settings()
-        self.filename = Path(__file__).parent / filename
-        self.load_from_file()
         self.apply_setting()
         self.__finish = False
         self.__is_error = False
@@ -105,14 +131,6 @@ class Bot(CmdProvider):
             "close": self.exit,
             "q": self.exit,
         }
-        self.__list_of_cmds_providers = [
-            self.book.contacts,
-            self.book.notes,
-            self,
-        ]
-        self.__update_exes_dict()
-        all_cmds = sorted(list(self.__get_cmds_list()))
-        self.cmd_completer = WordCompleter(all_cmds)
 
     def __add_exes(self, cmds_help, exe_handler):
         for cmd_help in cmds_help:
@@ -129,27 +147,80 @@ class Bot(CmdProvider):
     def __get_cmds_list(self):
         return self.exes.keys()
 
-    def load_from_file(self):
-        try:
-            with open(self.filename, "rb") as f:
-                data = pickle.load(f)
-                if "contacts" in data:
-                    self.book.contacts.data = data.get("contacts", Contacts())
-                if "notes" in data:
-                    self.book.notes.data = data.get("notes", Notes())
-                if "settings" in data:
-                    self.settings.data = data.get("settings", Settings())
-        except:
-            pass
+    def set_cmd_providers(self, cmd_providers):
+        self.__list_of_cmds_providers = cmd_providers
+        self.__update_exes_dict()
+        all_cmds = sorted(list(self.__get_cmds_list()))
+        self.cmd_completer = WordCompleter(all_cmds)
+
+    def set_save_handler(self, handler):
+        self.save_handler = handler
+
+    def get_extra_data_from_user(
+        self,
+        list_of_types,
+        list_of_prompts,
+        assert_validator=None,
+        mandatory_first_entry=True,
+        mandatory_all_entries=False,
+    ):
+        num = min(len(list_of_types), len(list_of_prompts))
+        data = [None] * num
+        assert_validators = [None] * num
+        if type(assert_validator) is list:
+            assert_validators = assert_validator + assert_validators
+        else:
+            assert_validators[0] = assert_validator
+        for i in range(num):
+            is_current_entry_mandatory = (
+                mandatory_first_entry or mandatory_all_entries
+            )
+            current_prompt = Text(
+                list_of_prompts[i], style=CLI.MSG_STYLE_PROMPT
+            )
+            while True:
+                user_data = ""
+                try:
+                    user_data = CLI.input(current_prompt)
+                    user_data = user_data.strip()
+                    if len(user_data) == 0 and (
+                        not is_current_entry_mandatory
+                    ):
+                        break
+                    good_data = list_of_types[i](user_data)
+                    if assert_validators[i]:
+                        assert_validators[i](good_data.value)
+                    data[i] = list_of_types[i](user_data)
+                    mandatory_first_entry = False
+                    break
+                except KeyboardInterrupt:
+                    CLI.print()
+                    if is_current_entry_mandatory:
+                        raise ErrorWithMsg("Command was interrupted")
+                    return data
+                except ErrorWithMsg as er:
+                    if len(user_data) == 0:
+                        CLI.print(
+                            "This field can not be empty",
+                            style=CLI.MSG_STYLE_ERROR,
+                            highlight=False,
+                        )
+                    else:
+                        CLI.print(
+                            er, style=CLI.MSG_STYLE_ERROR, highlight=False
+                        )
+        return data
+
+    def get_for_file(self):
+        return self.settings.data
+
+    def set_from_file(self, data):
+        self.settings.data = data
+        self.apply_setting()
 
     def save_to_file(self):
-        data = {
-            "contacts": self.book.contacts.data,
-            "notes": self.book.notes.data,
-            "settings": self.settings.data,
-        }
-        with open(self.filename, "wb") as f:
-            pickle.dump(data, f)
+        if not self.save_handler is None:
+            self.save_handler()
 
     def apply_setting(self):
         if self.settings.data["Name"]:
@@ -161,7 +232,7 @@ class Bot(CmdProvider):
         if not self.settings.data["Show reminders"]:
             Notes.WELCOME_REMINDERS_NUM_OF_DAYS = 0
         if not self.settings.data["Show quote"] is None:
-            Bot.SHOW_WELCOME_QUOTE = self.settings.data["Show quote"]
+            CLIBot.SHOW_WELCOME_QUOTE = self.settings.data["Show quote"]
         if not self.settings.data["Color theme"] is None:
             CLI.apply_color_scheme(self.settings.data["Color theme"])
         if not self.settings.data["Use prompt"] is None:
@@ -187,7 +258,7 @@ class Bot(CmdProvider):
                     f"{item} (current {self.settings.data[item]}): "
                 )
             list_of_asserts.append(self.settings.config[item].checker)
-        data = get_extra_data_from_user(
+        data = self.get_extra_data_from_user(
             list_of_types,
             list_of_prompts,
             list_of_asserts,
@@ -207,23 +278,21 @@ class Bot(CmdProvider):
         return "New settings applied"
 
     def help(self):
-        return Bot.__cmds_help
+        return CLIBot.__cmds_help
 
-    def exe(self, cmd, args):
+    def exe(self, cmd, args, get_extra_data_from_user_handler):
         return self.cmds[cmd](args)
 
     def get_quote(self):
         response = requests.get("https://zenquotes.io/api/random").json()
         q = response[0]["q"]
         a = response[0]["a"]
-        random_quote = (
-            f'"{q}" - {a} (https://zenquotes.io/)'
-        )
+        random_quote = f'"{q}" - {a} (https://zenquotes.io/)'
         return random_quote
 
     def welcome_message(self):
-        if Bot.SHOW_WELCOME_QUOTE:
-            return f'Quote for today: {self.get_quote()}'
+        if CLIBot.SHOW_WELCOME_QUOTE:
+            return f"Quote for today: {self.get_quote()}"
         else:
             return ""
 
@@ -243,8 +312,8 @@ class Bot(CmdProvider):
             except ErrorWithMsg as e:
                 return e
             except ValueError as e:
-                return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
-                    Bot.INVALID_CMD_MSG,
+                return CLIBot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
+                    CLIBot.INVALID_CMD_MSG,
                     __self.exes[func.__name__.replace("_", "-")][1],
                 )
             except Exception as e:
@@ -253,11 +322,11 @@ class Bot(CmdProvider):
         return inner
 
     def __unknown_cmd(self, cmd, args):
-        raise ErrorWithMsg(Bot.INVALID_CMD_MSG)
+        raise ErrorWithMsg(CLIBot.INVALID_CMD_MSG)
 
     def exit(self, args):
         self.__finish = True
-        return Bot.BYE_MSG
+        return CLIBot.BYE_MSG
 
     def get_help_message(self, args):
         help_dict = OrderedDict()
@@ -266,23 +335,23 @@ class Bot(CmdProvider):
             for l in help:
                 help_dict[l[1]] = l[2]
         txt_list = list()
-        txt_list.append(Bot.HELP_MESSAGE_HEAD)
+        txt_list.append(CLIBot.HELP_MESSAGE_HEAD)
         for h1, h2 in help_dict.items():
-            txt_list.append(Bot.HELP_MSG_CMDS_FORMAT.format(h1, h2))
+            txt_list.append(CLIBot.HELP_MSG_CMDS_FORMAT.format(h1, h2))
         txt_list.append("")
         return txt_list
 
     def exe_cmd(self, cmd, args):
         try:
             self.__is_error = True
-            ret = self.exes[cmd][0](cmd, args)
+            ret = self.exes[cmd][0](cmd, args, self.get_extra_data_from_user)
             self.__is_error = False
             return ret
         except ErrorWithMsg as e:
             return e
         except ValueError as e:
-            return Bot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
-                Bot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
+            return CLIBot.PARSING_ERROR_MSG_CMDS_FORMAT.format(
+                CLIBot.INVALID_CMD_MSG, self.exes[cmd.replace("_", "-")][1]
             )
         except Exception as e:
             return str(e)
@@ -337,14 +406,14 @@ class Bot(CmdProvider):
             pass
 
     def save_if_cmd(self, cmd):
-        for p in Bot.SAVE_PATTERNS:
+        for p in CLIBot.SAVE_PATTERNS:
             if p in cmd:
                 self.save_to_file()
                 return
 
     def run(self):
         CLI.print(
-            Bot.HELLO_MSG.format(self.name),
+            CLIBot.HELLO_MSG.format(self.name),
             style=CLI.MSG_STYLE_WELCOME,
             highlight=False,
         )
@@ -358,7 +427,7 @@ class Bot(CmdProvider):
                 )
 
         CLI.print(
-            Bot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False
+            CLIBot.HELLO_HELP_MSG, style=CLI.MSG_STYLE_HINT, highlight=False
         )
 
         try:
@@ -366,11 +435,11 @@ class Bot(CmdProvider):
                 try:
                     self.__is_error = False
                     cmd, args = self.get_input(
-                        Bot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT
+                        CLIBot.PROMPT_MSG, style=CLI.MSG_STYLE_PROMPT
                     )
                     if "__empty__" == cmd:
                         CLI.print(
-                            Bot.HELLO_HELP_MSG,
+                            CLIBot.HELLO_HELP_MSG,
                             style=CLI.MSG_STYLE_HINT,
                             highlight=False,
                         )
@@ -380,10 +449,10 @@ class Bot(CmdProvider):
                             style = CLI.MSG_STYLE_ERROR
                         else:
                             style = CLI.MSG_STYLE_OK
-                        Bot.print_all(res, style=style)
+                        CLIBot.print_all(res, style=style)
                         self.save_if_cmd(cmd)
                 except KeyboardInterrupt:
-                    Bot.print_all(Bot.BYE_MSG, style=CLI.MSG_STYLE_OK)
+                    CLIBot.print_all(CLIBot.BYE_MSG, style=CLI.MSG_STYLE_OK)
                     self.__finish = True
 
         except Exception as e:
